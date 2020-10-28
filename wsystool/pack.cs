@@ -98,7 +98,7 @@ namespace wsystool
                             var hist0 = 0;
                             var hist1 = 0;
                             short* wavFP = (short*)wavSamples;
-                            for (int ix = 0; i < sc; ix += 16)
+                            for (int ix = 0; ix < sc; ix += 16)
                             {
                                 short[] wavIn = new short[16];
                                 byte[] adpcmOut = new byte[9];
