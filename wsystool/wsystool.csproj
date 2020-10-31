@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="bananapeel\banan_wave.cs" />
     <Compile Include="beio\BeBinaryReader.cs" />
     <Compile Include="beio\BeBinaryWriter.cs" />
     <Compile Include="beio\BigEndian.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="bananapeel\zbanan_logo.png" />
     <Content Include="licenses\libjaudio-ujsystem.txt" />
     <Content Include="licenses\mareep.txt" />
     <Content Include="licenses\wsystool.txt" />
