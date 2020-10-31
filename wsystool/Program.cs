@@ -18,26 +18,6 @@ namespace wsystool
             cmdarg.cmdargs = args;
 
 
-
-            /*
-            var fw = File.OpenRead("bup4.wav");
-            var w = PCM16WAV.readStream(new BinaryReader(fw));
-            for (int i=0; i < w.cuePoints.Length; i++)
-            {
-                Console.WriteLine(w.cuePoints[i].frameOffset);
-            }
-            ObjectDumper.Dumper.Dump(w, "WAVE", Console.Out);
-            Console.WriteLine(w);
-            var ww = File.OpenWrite("yes4.wav");
-            var bw = new BinaryWriter(ww);
-            w.writeStreamLazy(bw);
-            bw.Flush();
-            bw.Close();
-            Console.ReadLine();
-            Environment.Exit(0);
-            */
-
-
             Console.WriteLine("wsystool JAudio WSYS packer / unpacker");
             //util.consoleProgress("Test", 50, 100);
             //Console.ReadLine();
@@ -61,8 +41,6 @@ namespace wsystool
                     Console.WriteLine($"Unknown operation '{operation}'. See 'wsystool help'");
                     break;
             }
-       
-
         }
     }
 }

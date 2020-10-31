@@ -235,7 +235,6 @@ namespace wsystool
             var smplOfs = findChunk(br, SMPL); // find OpenMPT sample chunk.
             if (smplOfs > 0)
             {
-                Console.WriteLine("OpenMPT Sample chunk found!");
                 var smplSize = br.ReadInt32();
                 NewWave.sampler = SamplerChunk.readStream(br);
             }      
