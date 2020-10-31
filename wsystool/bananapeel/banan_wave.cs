@@ -42,6 +42,96 @@ namespace wsystool
         }
     }
 
+    public struct SampleLoop {
+        public int dwIdentifier;
+        public int dwType;
+        public int dwStart;
+        public int dwEnd;
+        public int dwFraction;
+        public int dwPlayCount;
+        public static SampleLoop readStream(BinaryReader br)
+        {
+            return new SampleLoop()
+            {
+                dwIdentifier = br.ReadInt32(),
+                dwType = br.ReadInt32(),
+                dwStart = br.ReadInt32(),
+                dwEnd = br.ReadInt32(),
+                dwFraction = br.ReadInt32(),
+                dwPlayCount = br.ReadInt32()
+            };
+        }
+        public void writeStream( BinaryWriter bw)
+        {
+            bw.Write(dwIdentifier);
+            bw.Write(dwType);
+            bw.Write(dwStart);
+            bw.Write(dwEnd);
+            bw.Write(dwFraction);
+            bw.Write(dwPlayCount);
+        }
+    }
+
+    public struct SamplerChunk
+    {
+        public int manufacturer;
+        public int product;
+        public int period;
+        public int unityNote;
+        public int pitchFracton;
+        public int smtpeFormat;
+        public int smtpeOffset;
+        public int sampleLoopsCount;
+        public int samplerData;
+        public SampleLoop[] loops;
+
+
+        public const int SMPL = 0x6C706D73;
+
+        public static SamplerChunk readStream(BinaryReader br)
+        {
+            var ns = new SamplerChunk()
+            {
+                manufacturer = br.ReadInt32(),
+                product = br.ReadInt32(),
+                period = br.ReadInt32(),
+                unityNote = br.ReadInt32(),
+                pitchFracton = br.ReadInt32(),
+                smtpeFormat = br.ReadInt32(),
+                smtpeOffset = br.ReadInt32(),
+                sampleLoopsCount = br.ReadInt32(),
+                samplerData = br.ReadInt32()
+            };
+            ns.loops = new SampleLoop[ns.sampleLoopsCount];
+            for (int i=0; i < ns.sampleLoopsCount; i++)
+            {
+                ns.loops[i] = SampleLoop.readStream(br);
+            }
+            return ns;
+        }
+        public void writeStream(BinaryWriter bw)
+        {
+            if (loops == null)
+                loops = new SampleLoop[0];
+            bw.Write(SMPL);
+            bw.Write(36 + loops.Length * 24);
+            bw.Write(manufacturer);
+            bw.Write(product);
+            bw.Write(period);
+            bw.Write(unityNote);
+            bw.Write(pitchFracton);
+            bw.Write(0); // SMTPE
+            bw.Write(0); // SMTPE OFFSET
+            bw.Write(loops.Length);
+            bw.Write(0); // SAMPLER DATA. 
+            for (int i = 0; i < loops.Length; i++)
+            {
+                loops[i].writeStream(bw);
+            }
+        }
+
+    }
+
     public class PCM16WAV
     {
 
@@ -52,11 +142,18 @@ namespace wsystool
                         0x02, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61,  0x00, 0x00, 0x00, 0x00
         };
 
+        private static byte[] smplSect = new byte[]
+        {
+                        0x73,0x6D,0x70,0x6C,0x3C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x61,0x51,0x00,0x00,
+                        0x3C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,
+                        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x2E,0x06,0x00,0x00,0x08,0x12,0x00,0x00,
+                        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+        };
+
         public const int FORMAT = 0x20746D66;
         public const int DATA = 0x61746164;
         public const int CUE = 0x20657563;
-        public const int SMPL = 0x6C706D73; // OpenMPT sample chunk.
-
+        public const int SMPL = 0x6C706D73;
         public int chunkSize;
         public short format;
         public short channels;
@@ -67,6 +164,8 @@ namespace wsystool
         public int sampleCount; 
         public short[] buffer;
         public WAVCuePoint[] cuePoints;
+        public SamplerChunk sampler;
+        
 
         private static int findChunk(BinaryReader br, int chunkid)
         {
@@ -136,13 +235,10 @@ namespace wsystool
             var smplOfs = findChunk(br, SMPL); // find OpenMPT sample chunk.
             if (smplOfs > 0)
             {
+                Console.WriteLine("OpenMPT Sample chunk found!");
                 var smplSize = br.ReadInt32();
-                br.ReadBytes(0x2C); /// ooooh fuuuuuu
-            
-
-            }
-            
-       
+                NewWave.sampler = SamplerChunk.readStream(br);
+            }      
             return NewWave;
         }
 
@@ -169,6 +265,10 @@ namespace wsystool
                 {
                     cuePoints[i].writeStream(bw);
                 }
+            }
+            if (sampler.loops != null)
+            {
+                sampler.writeStream(bw);
             }
             var tl_end = (int)bw.BaseStream.Position;
             bw.BaseStream.Position = 4;

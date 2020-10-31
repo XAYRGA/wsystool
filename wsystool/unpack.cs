@@ -50,7 +50,7 @@ namespace wsystool
         {
 
         }
-        public static void unpack_do(string filename, string projFolder)
+        public static unsafe void unpack_do(string filename, string projFolder)
         {
             cmdarg.assert(!File.Exists(filename), "The file {0} could not be found", filename);
             try
@@ -123,8 +123,46 @@ namespace wsystool
                     {
                         //var crc = crc32.ComputeChecksum(dat);
                         var pcm16 = bananapeel.ADPCMToPCM16(dat, bananapeel.ADPCMFormat.FOUR_BIT);
-                        var wfile = bananapeel.makeWAVFile(pcm16, (int)wData.sampleRate);
-                        File.WriteAllBytes($"{projFolder}/wav/{cData.waveid}.wav", wfile);
+                        var pclLen = pcm16.Length;
+                        var pcmFinal = new short[pcm16.Length / 2];
+                        fixed( byte* pcm8 = pcm16 )
+                        {
+                            var shortData = (short*)pcm8;
+                            for (int sampleIdex = 0; sampleIdex < pcmFinal.Length; sampleIdex++)
+                            {
+                                pcmFinal[sampleIdex] = shortData[sampleIdex];
+                            }
+                        }
+                        var nwf = new PCM16WAV()
+                        {
+                            format = 1,
+                            sampleRate = (int)wData.sampleRate,
+                            channels = 1,
+                            blockAlign = 2,
+                            bitsPerSample = 16,
+                            buffer = pcmFinal,                           
+                        };
+
+                        if (wData.loop == true)
+                        {
+                            nwf.sampler.loops = new SampleLoop[1];
+                            nwf.sampler.loops[0] = new SampleLoop()
+                            {
+                                dwIdentifier = 0,
+                                dwEnd = wData.loop_end,
+                                dwFraction = 0,
+                                dwPlayCount = 0,
+                                dwStart = wData.loop_start,
+                                dwType = 0
+                            };
+                        }
+
+                        var fileData = File.OpenWrite($"{projFolder}/wav/{cData.waveid}.wav");
+                        var fileWriter = new BinaryWriter(fileData);
+                        nwf.writeStreamLazy(fileWriter);
+                        fileWriter.Flush();
+                        fileData.Close();
+
                         wavHash[cData.waveid] = true; 
                     }
                     util.consoleProgress($"\t->Transform ({cGrp.awFile})", i, cGrp.Waves.Length - 1, true);
