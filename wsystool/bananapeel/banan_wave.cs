@@ -16,8 +16,8 @@ namespace wsystool
         public int chunkid;
         public int chunkStart;
         public int blockStart;
-        public int frameOffset;         
-        
+        public int frameOffset;
+
         public static WAVCuePoint readStream(BinaryReader br)
         {
             return new WAVCuePoint()
@@ -42,7 +42,8 @@ namespace wsystool
         }
     }
 
-    public struct SampleLoop {
+    public struct SampleLoop
+    {
         public int dwIdentifier;
         public int dwType;
         public int dwStart;
@@ -61,7 +62,7 @@ namespace wsystool
                 dwPlayCount = br.ReadInt32()
             };
         }
-        public void writeStream( BinaryWriter bw)
+        public void writeStream(BinaryWriter bw)
         {
             bw.Write(dwIdentifier);
             bw.Write(dwType);
@@ -103,7 +104,7 @@ namespace wsystool
                 samplerData = br.ReadInt32()
             };
             ns.loops = new SampleLoop[ns.sampleLoopsCount];
-            for (int i=0; i < ns.sampleLoopsCount; i++)
+            for (int i = 0; i < ns.sampleLoopsCount; i++)
             {
                 ns.loops[i] = SampleLoop.readStream(br);
             }
@@ -161,16 +162,17 @@ namespace wsystool
         public int byteRate;
         public short blockAlign;
         public short bitsPerSample;
-        public int sampleCount; 
+        public int sampleCount;
         public short[] buffer;
         public WAVCuePoint[] cuePoints;
         public SamplerChunk sampler;
-        
+
 
         private static int findChunk(BinaryReader br, int chunkid)
         {
             int nextCID = 0;
-            while (true) {
+            while (true)
+            {
                 nextCID = br.ReadInt32();
                 if (chunkid != nextCID)
                 {
@@ -195,7 +197,7 @@ namespace wsystool
                 return null;
             // Find + load format chunk
             var wavHAnch = br.BaseStream.Position;
-            var fmtOfs = findChunk(br,FORMAT); // Locate format chunk
+            var fmtOfs = findChunk(br, FORMAT); // Locate format chunk
             if (fmtOfs < 0)
                 return null; // format chunk wasn't found. Abort.
             br.BaseStream.Position = fmtOfs;
@@ -217,14 +219,15 @@ namespace wsystool
                 return null;
             var datSize = br.ReadInt32(); // section size. 
             NewWave.sampleCount = datSize / NewWave.blockAlign; // calculate sample count (data length / block alignment)
-            NewWave.buffer = new short[NewWave.sampleCount]; // initialize PCM buffer array
-            for (int i=0; i < NewWave.sampleCount; i++)
+            NewWave.buffer = new short[NewWave.sampleCount * NewWave.channels]; // initialize PCM buffer array
+            for (int i = 0; i < NewWave.sampleCount * NewWave.channels; i++)
                 NewWave.buffer[i] = br.ReadInt16(); // sprawl out samples into array
 
             br.BaseStream.Position = wavHAnch; // Seek back to section anchor (first section magic)
             // Load cue points (optional)
             var cueOfs = findChunk(br, CUE); // Locate "cue " chunk
-            if (cueOfs > 0) {
+            if (cueOfs > 0)
+            {
                 var cueLength = br.ReadInt32(); // Reading just to align. (Section size)
                 var cueCount = br.ReadInt32();
                 NewWave.cuePoints = new WAVCuePoint[cueCount]; // initialize array with length
@@ -232,12 +235,12 @@ namespace wsystool
                     NewWave.cuePoints[i] = WAVCuePoint.readStream(br); // read individual points into array
             }
             br.BaseStream.Position = wavHAnch;
-            var smplOfs = findChunk(br, SMPL); // find OpenMPT sample chunk.
+            var smplOfs = findChunk(br, SMPL); // 
             if (smplOfs > 0)
             {
                 var smplSize = br.ReadInt32();
                 NewWave.sampler = SamplerChunk.readStream(br);
-            }      
+            }
             return NewWave;
         }
 
@@ -252,9 +255,9 @@ namespace wsystool
             bw.BaseStream.Position = 40;
             // Also includes WAVEfmt                
             bw.Write((int)bufferLength);
-            for (int i = 0; i < buffer.Length; i++) 
+            for (int i = 0; i < buffer.Length; i++)
                 bw.Write(buffer[i]); // sprawl out each short
-          
+
             if (cuePoints != null && cuePoints.Length > 0)
             {
                 bw.Write(CUE);
