@@ -12,7 +12,11 @@ namespace wsystool
         static void Main(string[] args)
         {
 #if DEBUG
-
+            args = new string[] {
+                "pack",
+                "test_proj24",
+                "test44.wsy",
+            };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;

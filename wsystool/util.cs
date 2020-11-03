@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Be.IO;
 
 namespace wsystool
 {
@@ -23,5 +24,13 @@ namespace wsystool
             if (show_progress)
                 Console.Write($" ({progress}/{max})");           
         }
+        public static void padTo(BeBinaryWriter bw, int padding)
+        {
+            while ((bw.BaseStream.Length % padding) != 0)
+            {
+                bw.Write((byte)0x00);
+            }
+        }
+
     }
 }

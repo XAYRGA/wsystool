@@ -254,7 +254,7 @@ namespace wsystool
             bw.Write((int)sampleRate);
             bw.BaseStream.Position = 40;
             // Also includes WAVEfmt                
-            bw.Write((int)bufferLength);
+            bw.Write((int)bufferLength / channels);
             for (int i = 0; i < buffer.Length; i++)
                 bw.Write(buffer[i]); // sprawl out each short
 

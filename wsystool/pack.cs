@@ -23,6 +23,46 @@ namespace wsystool
             return $"{dir}/aw_{fname}";
         }
 
+        public static byte[] transform_pcm16_mono_adpcm(PCM16WAV WaveData, out int adjustedSampleCount)
+        {
+            //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
+
+          
+            int frameCount = (WaveData.sampleCount + 16 - 1) / 16;
+            adjustedSampleCount = frameCount * 16; // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
+            var frameBufferSize = frameCount * 9; // and we know the amount of bytes that the buffer will take.
+            var adjustedFrameBufferSize = frameBufferSize; //+ (frameBufferSize % 32); // pads buffer to 32 bytes. 
+            byte[] adpcm_data = new byte[adjustedFrameBufferSize]; // 9 bytes per 16 samples
+
+            //Console.WriteLine($"\n\n\n{WaveData.sampleCount} samples\n{frameCount} frames.\n{frameBufferSize} bytes\n{adjustedFrameBufferSize} padded bytes. ");
+            var adp_f_pos = 0; // ADPCM position
+
+            var lastSample = 0; 
+            var penultimate = 0; 
+
+            var wavFP = WaveData.buffer;
+            // transform one frame at a time
+            for (int ix = 0; ix < frameCount; ix++)
+            {
+                short[] wavIn = new short[16];
+                byte[] adpcmOut = new byte[9];
+                for (int k = 0; k < 16; k++)
+                {
+                    if ( ((ix*16) + k) >= WaveData.sampleCount)
+                        continue; // skip if we're out of samplebuffer, continue to build last frame
+                    wavIn[k] = wavFP[ (ix*16) + k];
+                }
+                // build ADPCM frame
+                bananapeel.Pcm16toAdpcm4(wavIn, adpcmOut, ref lastSample, ref penultimate); // convert PCM16 -> ADPCM4
+                for (int k = 0; k < 9; k++)
+                {
+                    adpcm_data[adp_f_pos] = adpcmOut[k]; // dump into ADPCM buffer.
+                    adp_f_pos++; // increment ADPCM byte
+                }
+            }
+            return adpcm_data;
+        }
+
         public static unsafe void pack_do(string projFolder, string outfile)
         {
             cmdarg.assert(!Directory.Exists(projFolder), "Project folder '{0}' could not be found", projFolder);
@@ -53,6 +93,7 @@ namespace wsystool
                 var cGrp = WaveSystem.Groups[cWI];
                 var cScn = WaveSystem.Scenes[cWI];
                 var awOutHnd = File.Open($"{awOutput}/{cGrp.awFile}",FileMode.OpenOrCreate,FileAccess.ReadWrite);
+                var awOutWt = new BeBinaryWriter(awOutHnd);
                // var awWriter = new BeBinaryWriter(awOutHnd);
                 var total_aw_offset = 0;
                 for (int i=0; i < cGrp.Waves.Length; i++)
@@ -64,48 +105,20 @@ namespace wsystool
                     var cWaveFile = $"{projFolder}/custom/{cData.waveid}.wav";
                     if (File.Exists(cWaveFile))
                     {
-
                         var strm = File.OpenRead(cWaveFile);
                         var strmInt = new BinaryReader(strm);
 
                         var WaveData = PCM16WAV.readStream(strmInt);
-
                         if (WaveData == null)
                             cmdarg.assert($"ABORT: '{cWaveFile} has invalid format.");
 
-                        Console.WriteLine($"Packing custom wave custom/{cData.waveid}.wav");
-                        cmdarg.assert(WaveData.sampleRate > 32000, $"ABORT: '{cWaveFile} has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
-
-                        adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
-                        var adp_f_pos = 0;
-                        var hist0 = 0;
-                        var hist1 = 0;
-                        var wavFP = WaveData.buffer;
-                        for (int ix = 0; ix < WaveData.sampleCount; ix += 16)
-                        {
-                            short[] wavIn = new short[16];
-                            byte[] adpcmOut = new byte[9];
-                            for (int k = 0; k < 16; k++)
-                            {
-                                wavIn[k] = wavFP[ix + k];
-                            }
-                            bananapeel.Pcm16toAdpcm4(wavIn, adpcmOut, ref hist0, ref hist1);
-                            for (int k = 0; k < 9; k++)
-                            {
-                                adpcm_data[adp_f_pos] = adpcmOut[k];
-                                adp_f_pos++;
-                            }
-                        }
-                        /*
-                        for (int k = 0; k < 9; k++)
-                        {
-                            adpcm_data[(adp_f_pos - 9) + k] = 0; // what the fuck what the fuck what the FUCK??? // Last sample is cuck data? 
-                            adp_f_pos++;
-                        }
-                        */
-
+                        cmdarg.assert(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile} has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                        Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
+                        int samplesCount = 0;
+                        var byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount);
+                        adpcm_data = byteInfo;
                         wData.sampleRate = WaveData.sampleRate;
-                        wData.sampleCount = WaveData.sampleCount;
+                        wData.sampleCount = samplesCount; // __wow__
 
                         if (WaveData.sampler.loops !=null && WaveData.sampler.loops.Length > 0)
                         {
@@ -124,12 +137,24 @@ namespace wsystool
                     wsysWrite.Seek(0x04, SeekOrigin.Current);
                     wsysWrite.Write((float)wData.sampleRate);
                     wsysWrite.Write(total_aw_offset);
-                    wsysWrite.Write(adpcm_data.Length);
+                    wsysWrite.Write(adpcm_data.Length); // SHOULD spit out exact frame length. holy FUCK.
+                    wsysWrite.Write(wData.loop ? 0xFFFFFFFF : 0x00000000);
+                    wsysWrite.Write(wData.loop_start);
+                    wsysWrite.Write(wData.loop_end);
                     wsysWrite.Flush();
+
+                    // write buffer to AW
                     awOutHnd.Write(adpcm_data, 0, adpcm_data.Length);
+                    util.padTo(awOutWt, 32); // pad to 32 bytes
                     awOutHnd.Flush();
-                    total_aw_offset += adpcm_data.Length;
+                    total_aw_offset = (int)awOutHnd.Position; // write the out position because that's what we've padded to
+
+
+                    // You can't see me
+                    // behind the screen
                     util.consoleProgress($"\t->Rebuild ({cGrp.awFile})", i, cGrp.Waves.Length - 1,true);
+                    /// I'm half human
+                    /// and half M A C H I N E                   
                 }
                 awOutHnd.Close();
                 Console.WriteLine();
