@@ -112,7 +112,8 @@ namespace wsystool
                         if (WaveData == null)
                             cmdarg.assert($"ABORT: '{cWaveFile} has invalid format.");
 
-                        cmdarg.assert(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile} has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                        cmdarg.assert(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                        cmdarg.assert(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
                         Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
                         int samplesCount = 0;
                         var byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount);
@@ -132,7 +133,22 @@ namespace wsystool
                         cmdarg.assert(!File.Exists(reffile), "ABORT: Could not find reference file: {0}", reffile);
                         adpcm_data = File.ReadAllBytes(reffile);
                     }
+                    /*
+                     
 
+                       0x00 - byte unknown
+                        0x01 - byte format
+                        0x02 - byte baseKey  
+                        0x03 - byte unknown 
+                        0x04 - float sampleRate 
+                        0x08 - int32 start
+                        0x0C - int32 length 
+                        0x10 - int32 loop >  0  ?  true : false 
+                        0x14 - int32 loop_start
+                        0x18 - int32 loop_end 
+                        0x1C  - int32 sampleCount 
+
+                */             
                     wsysWrite.BaseStream.Position = wData.mOffset;
                     wsysWrite.Seek(0x04, SeekOrigin.Current);
                     wsysWrite.Write((float)wData.sampleRate);
@@ -141,6 +157,7 @@ namespace wsystool
                     wsysWrite.Write(wData.loop ? 0xFFFFFFFF : 0x00000000);
                     wsysWrite.Write(wData.loop_start);
                     wsysWrite.Write(wData.loop_end);
+                    wsysWrite.Write(wData.sampleCount);
                     wsysWrite.Flush();
 
                     // write buffer to AW
