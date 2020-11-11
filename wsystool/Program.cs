@@ -13,9 +13,11 @@ namespace wsystool
         {
 #if DEBUG
             args = new string[] {
-                "pack",
-                "test_proj24",
-                "test44.wsy",
+                "unpack",
+                "./Audio_Modding/include/2.wsy",
+                "test444_proj",
+                "-awpath",
+                "./Waves"
             };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 

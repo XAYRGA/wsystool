@@ -149,6 +149,7 @@ namespace wsystool
                         0x1C  - int32 sampleCount 
 
                 */             
+                //Console.WriteLine()
                     wsysWrite.BaseStream.Position = wData.mOffset;
                     wsysWrite.Seek(0x04, SeekOrigin.Current);
                     wsysWrite.Write((float)wData.sampleRate);
@@ -162,11 +163,17 @@ namespace wsystool
 
                     // write buffer to AW
                     awOutHnd.Write(adpcm_data, 0, adpcm_data.Length);
-                    util.padTo(awOutWt, 32); // pad to 32 bytes
+                    //util.padTo(awOutWt, 32); // pad to 32 bytes go to hell
                     awOutHnd.Flush();
                     total_aw_offset = (int)awOutHnd.Position; // write the out position because that's what we've padded to
 
-
+                    if (total_aw_offset % 9 != 0)
+                    {
+                        var oc = Console.ForegroundColor;
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"ALERT: ADPCM SAMPLES NOT ALIGNED TO 9 Dividend remainder: ({total_aw_offset % 9})");
+                        Console.ForegroundColor = oc;
+                    }
                     // You can't see me
                     // behind the screen
                     util.consoleProgress($"\t->Rebuild ({cGrp.awFile})", i, cGrp.Waves.Length - 1,true);
