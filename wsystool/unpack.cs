@@ -5,7 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Be.IO;
-using libJAudio; 
+using libJAudio;
+using Newtonsoft.Json;
 
 namespace wsystool
 {
@@ -22,6 +23,7 @@ namespace wsystool
             Directory.CreateDirectory($"{path}/ref");
             Directory.CreateDirectory($"{path}/wav");
             Directory.CreateDirectory($"{path}/custom");
+            Directory.CreateDirectory($"{path}/groups");
             File.WriteAllText($"{path}/ref/__DO_NOT_TOUCH_THESE_FILES.txt", "Don't touch these files, they are used to reference the rebuild data.");
             File.WriteAllText($"{path}/custom/__PUT_WAV_FILES_IN_HERE.txt", "These files will overwrite the ones in the game when the ws is rebuilt.");
             File.WriteAllText($"{path}/wav/__README.txt", "These files aren't used for anything other than listening.\nModifying these will have no affect on the game.\nIf you modify one of these, move it to the 'rep' folder for it to take place in game.");
@@ -50,6 +52,30 @@ namespace wsystool
         {
 
         }
+
+
+        public static short[] ADPCM42PCM16(byte[] adpdata)
+        {
+            var totalSamples = ( (adpdata.Length / 9) * 16) ; /// ADPCM Frames are 9 bytes length, comes out to 16 short samples. 
+            var frameOffset = 0;  // Initialize 0 frame offset
+            short[] smplBuff = new short[totalSamples]; // Initialize container for samples
+            int pen = 0; // penultimate
+            int last = 0; // last sample
+            for (int sam = 0; sam < totalSamples; sam+=16) // Increment samples in blocks of 16
+            {
+                byte[] adpcm4 = new byte[9]; // 9 ADPCM frame
+                short[] sample = new short[16]; // 16 PCM frame
+                for (int i = 0; i < 9; i++) // sprawl out ADPCM Frame
+                    adpcm4[i] = adpdata[frameOffset + i]; // ^
+                frameOffset += 9; // Increment to next frame (0 indexed)
+                bananapeel.Adpcm4toPcm16(adpcm4, sample, ref last, ref pen); // transform, store in "sample"
+                for (int i = 0; i < 16; i++)  // sprawl out PCM sample into sample buffer
+                    smplBuff[sam + i] = sample[i]; // ^
+            }
+            return smplBuff; // return
+        }
+
+
         public static unsafe void unpack_do(string filename, string projFolder)
         {
             cmdarg.assert(!File.Exists(filename), "The file {0} could not be found", filename);
@@ -78,6 +104,7 @@ namespace wsystool
             {
                 var cGrp = WaveSystem.Groups[cWI];
                 var cScn = WaveSystem.Scenes[cWI];
+
                 var awf = getAWFileHandle(base_addr, cGrp.awFile);
                 if (awf == null)
                     cmdarg.assert("Cannot find AWFile {0}", cGrp.awFile);
@@ -104,6 +131,8 @@ namespace wsystool
                 Console.WriteLine();
             }
 
+           
+
             Console.WriteLine("Transforming ADPCM data.... (may take a while)");
             for (int cWI = 0; cWI < WaveSystem.Groups.Length; cWI++)
             {
@@ -122,17 +151,10 @@ namespace wsystool
                     if (wavHash[cData.waveid] == false) // skip writes if sound already exists.
                     {
                         //var crc = crc32.ComputeChecksum(dat);
-                        var pcm16 = bananapeel.ADPCMToPCM16(dat, bananapeel.ADPCMFormat.FOUR_BIT);
-                        var pclLen = pcm16.Length;
-                        var pcmFinal = new short[pcm16.Length / 2];
-                        fixed( byte* pcm8 = pcm16 )
-                        {
-                            var shortData = (short*)pcm8;
-                            for (int sampleIdex = 0; sampleIdex < pcmFinal.Length; sampleIdex++)
-                            {
-                                pcmFinal[sampleIdex] = shortData[sampleIdex];
-                            }
-                        }
+
+
+                        var pcmFinal = ADPCM42PCM16(dat);
+                    
                         var nwf = new PCM16WAV()
                         {
                             format = 1,

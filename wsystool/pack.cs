@@ -32,7 +32,7 @@ namespace wsystool
             adjustedSampleCount = frameCount * 16; // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
             var frameBufferSize = frameCount * 9; // and we know the amount of bytes that the buffer will take.
             var adjustedFrameBufferSize = frameBufferSize; //+ (frameBufferSize % 32); // pads buffer to 32 bytes. 
-            byte[] adpcm_data = new byte[adjustedFrameBufferSize]; // 9 bytes per 16 samples
+            byte[] adpcm_data = new byte[adjustedFrameBufferSize + 18]; // 9 bytes per 16 samples 
 
             //Console.WriteLine($"\n\n\n{WaveData.sampleCount} samples\n{frameCount} frames.\n{frameBufferSize} bytes\n{adjustedFrameBufferSize} padded bytes. ");
             var adp_f_pos = 0; // ADPCM position
@@ -114,7 +114,7 @@ namespace wsystool
 
                         cmdarg.assert(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
                         cmdarg.assert(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
-                        Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
+                       // Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
                         int samplesCount = 0;
                         var byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount);
                         adpcm_data = byteInfo;
@@ -172,14 +172,14 @@ namespace wsystool
                         var oc = Console.ForegroundColor;
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine($"ALERT: ADPCM SAMPLES NOT ALIGNED TO 9 Dividend remainder: ({total_aw_offset % 9})");
+                        total_aw_offset = (int)awOutHnd.Position;
                         Console.ForegroundColor = oc;
                     }
                     // You can't see me
                     // behind the screen
-                    util.consoleProgress($"\t->Rebuild ({cGrp.awFile})", i, cGrp.Waves.Length - 1,true);
-                    /// I'm half human
-                    /// and half M A C H I N E                   
+                    util.consoleProgress($"\t->Rebuild ({cGrp.awFile})", i, cGrp.Waves.Length - 1,true);    
                 }
+                util.padTo(awOutWt, 32);
                 awOutHnd.Close();
                 Console.WriteLine();
             }

@@ -73,6 +73,7 @@
     <Content Include="bananapeel\zbanan_logo.png" />
     <Content Include="licenses\libjaudio-ujsystem.txt" />
     <Content Include="licenses\mareep.txt" />
+    <Content Include="licenses\newtonsoft.Json.txt" />
     <Content Include="licenses\wsystool.txt" />
     <Content Include="wsystool.ico" />
     <None Include="App.config" />
@@ -83,4 +84,7 @@
     <Content Include="licenses\nullFX.CRC.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)" "$(SolutionDir)_release/tool" /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>

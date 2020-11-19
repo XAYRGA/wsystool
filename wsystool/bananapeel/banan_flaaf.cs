@@ -356,5 +356,30 @@ namespace wsystool
 				adpcm2[1 + i] = (byte)(((nibbles[i * 2] << 4) & 0xC0) | ((nibbles[i * 2 + 1] << 4) & 0x30) | ((nibbles[i * 2 + 2] << 4) & 0x0C) | (nibbles[i * 2 + 3] & 0x03));
 			}
 		}
+		public static void Adpcm4toPcm16(byte[] adpcm4, short[] pcm16, ref int last, ref int penult)
+		{
+			var header = adpcm4[0];
+			var nibbleCoeff = (2048 << (header >> 4));
+
+			var coeffIndex = (header & 0xF);
+			var lastCoeff = sAdpcmCoefficents[coeffIndex, 0];
+			var penultCoeff = sAdpcmCoefficents[coeffIndex, 1];
+
+			for (var i = 0; i < 8; ++i)
+			{
+				var input = adpcm4[1 + i];
+
+				for (var j = 0; j < 2; ++j)
+				{
+					var nibble = sSigned4BitTable[(input >> 4) & 0xF];
+					var sample = ClampSample16Bit((nibbleCoeff * nibble + lastCoeff * last + penultCoeff * penult) >> 11);
+
+					penult = last;
+					last = sample;
+					pcm16[i * 2 + j] = sample;
+					input <<= 4;
+				}
+			}
+		}
 	}
 }
