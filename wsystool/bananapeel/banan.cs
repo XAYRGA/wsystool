@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace wsystool
+namespace wsysbuilder
 {
     public static partial class bananapeel
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace wsystool
+namespace wsysbuilder
 {
     public static class HelpManifest
     {

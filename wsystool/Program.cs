@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wsystool
+namespace wsysbuilder
 {
     class Program
     {
@@ -13,9 +13,9 @@ namespace wsystool
         {
 #if DEBUG
             args = new string[] {
-                "unpack",
-                "./Audio_Modding/include/2.wsy",
-                "test444_proj",
+                "pack",
+                @"Z:\twipri\files\Audiores\Audio_modding/MusicSamples",
+                @"Z:\twipri\files\Audiores\Audio_modding\include\3.wsy",
                 "-awpath",
                 "./Waves"
             };

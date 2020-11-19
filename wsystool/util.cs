@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Be.IO;
 
-namespace wsystool
+namespace wsysbuilder
 {
     public static class util
     {

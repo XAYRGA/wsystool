@@ -20,6 +20,9 @@ namespace libJAudio
         public int loop_start;
         public int loop_end;
 
+        public int last;
+        public int penult;
+
         public byte[] pcmData;
 
         public int mOffset;
