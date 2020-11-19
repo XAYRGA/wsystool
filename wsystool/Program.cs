@@ -11,7 +11,7 @@ namespace wsysbuilder
     {
         static void Main(string[] args)
         {
-#if DEBUG
+#if NOWAY
             args = new string[] {
                 "pack",
                 @"Z:\twipri\files\Audiores\Audio_modding/MusicSamples",

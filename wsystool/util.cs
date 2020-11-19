@@ -26,12 +26,23 @@ namespace wsysbuilder
         }
         public static int padTo(BeBinaryWriter bw, int padding)
         {
+            int del = 0; 
+            while (bw.BaseStream.Position % 32 != 0)
+            {
+                bw.BaseStream.WriteByte(0x00);
+                bw.BaseStream.Flush();
+                del++;
+            }
+            /*
             var delta = (int)(bw.BaseStream.Position % padding);
-            if (delta == padding)
+            
+            if (delta == padding || delta==0)
                 return 0;
             for (int i = 0; i < ( padding - delta ); i++)
                 bw.Write((byte)0x00);
             return (padding - delta);
+            */
+            return del;
         }
 
         public static int padToInt(int Addr, int padding)
