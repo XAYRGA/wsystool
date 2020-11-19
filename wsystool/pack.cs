@@ -87,6 +87,7 @@ namespace wsysbuilder
         private static JWaveDescriptor[] build_aw(string outFile, string projFolder,  minifiedScene scnData, Dictionary<int,JWaveDescriptor> waveTable, string awOutput) 
         {
             var awOutHnd = File.Open($"{awOutput}/{scnData.awfile}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            var awPadding = cmdarg.findDynamicNumberArgument("-awpadding", 32);
             var awOutWt = new BeBinaryWriter(awOutHnd);
             var total_aw_offset = 0;
             var ret = new JWaveDescriptor[scnData.waves.Length];
@@ -148,7 +149,6 @@ namespace wsysbuilder
                 var necessary_size = (wData.sampleCount / 16) * 9; 
                 wData.wsys_start = (int)awOutHnd.Position;
                 wData.wsys_size = adpcm_data.Length;
-
                 awOutHnd.Write(adpcm_data, 0, adpcm_data.Length);
                 //necessary_size -= adpcm_data.Length;
 
@@ -156,25 +156,16 @@ namespace wsysbuilder
                    // awOutHnd.WriteByte(0);
 
                 ret[wvi] = wData;
-                //util.padTo(awOutWt, 32); // pad to 32 bytes go to hell
+                var deltaPadding = util.padTo(awOutWt, awPadding); // pad to 32 bytes go to hell
+
                 awOutHnd.Flush();
-                total_aw_offset += adpcm_data.Length;
-
-
-                if (total_aw_offset % 9 != 0)
-                {
-                    var oc = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"ALERT: ADPCM SAMPLES NOT ALIGNED TO 9 Dividend remainder: ({total_aw_offset % 9})");
-                    total_aw_offset = (int)awOutHnd.Position;
-                    Console.ForegroundColor = oc;
-                }
+                total_aw_offset = (int)awOutWt.BaseStream.Position;      
 
                 util.consoleProgress($"\t->Rendering {scnData.awfile}...", wvi, scnData.waves.Length - 1, true);
                 
             }
             Console.WriteLine();
-            util.padTo(awOutWt, 32);
+           
             return ret;
         }
 
@@ -346,8 +337,6 @@ namespace wsysbuilder
                     wavePointers[wvIndex] = writeWave(wsysWriter, waves[wvIndex]);
 
                 util.padTo(wsysWriter, 32); // Pad to 32
-
-       
                 // Write waveGroup
                 groupPointers[sI] = writeGroup(wsysWriter, currentScene, waves);
                 util.padTo(wsysWriter, 32);
@@ -362,7 +351,6 @@ namespace wsysbuilder
                 var currentScene = sceneProjects[sI];
                 var waves = currentScene.waves;
                 // Build AW
-
                 var waveIDPointers = new int[waves.Length];
                 for (int wvIndex = 0; wvIndex < waves.Length; wvIndex++)
                 {
@@ -371,8 +359,6 @@ namespace wsysbuilder
                         highest_sound_id = waves[wvIndex] + 1;
                     //uniqueSounds[waves[wvIndex]] = true;
                 }
-
-               
                 util.padTo(wsysWriter, 32); // Pad to 32
                 // Write waveGroup
                 scenePointers[sI] = writeScene(wsysWriter, waveIDPointers);
