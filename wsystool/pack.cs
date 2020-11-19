@@ -96,11 +96,10 @@ namespace wsysbuilder
                 var miniIndex = scnData.waves[wvi];
                 var wData = waveTable[miniIndex];
 # if DEBUG
-                if (scnData.awfile == "Z2BgmWave_89.aw")
-                {
-                    Console.WriteLine($"{projFolder}/ref/{miniIndex}.adp");
-                    Console.ReadLine();
-                }
+  
+                    //Console.WriteLine($"{projFolder}/ref/{miniIndex}.adp");
+                    //Console.ReadLine();
+                
 #endif
                 int last = wData.last;
                 int penult = wData.penult;
