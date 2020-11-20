@@ -84,8 +84,33 @@ namespace wsysbuilder
             return adpcm_data;
         }
 
+
+        public static byte[] transform_pcm16_pcm8(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
+        {
+            //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
+
+            last = 0;
+            penult = 0;
+            
+            int frameCount = WaveData.sampleCount;
+            // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
+            adjustedSampleCount = frameCount;
+            byte[] pcm8Data = new byte[frameCount];
+
+            // transform one frame at a time
+            for (int ix = 0; ix < frameCount; ix++)
+            {
+                pcm8Data[ix] = (byte)((sbyte)(WaveData.buffer[ix] >> 8));
+            }
+            return pcm8Data;
+        }
+
+
+
         private static JWaveDescriptor[] build_aw(string outFile, string projFolder,  minifiedScene scnData, Dictionary<int,JWaveDescriptor> waveTable, string awOutput) 
         {
+
+            var bank_format = cmdarg.findDynamicStringArgument("--encode-format", "pcm8");
             var awOutHnd = File.Open($"{awOutput}/{scnData.awfile}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             var awPadding = cmdarg.findDynamicNumberArgument("-awpadding", 32);
             var awOutWt = new BeBinaryWriter(awOutHnd);
@@ -131,10 +156,30 @@ namespace wsysbuilder
                     {
                         wData.loop = false;
                     }
+
+                    last = 0;
+                    penult = 0;
+
+                    var byteInfo = new byte[0]; 
                     
-                    var byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount, wData.loop_start, out last, out penult);
-                    wData.last = last;
-                    wData.penult = penult;
+                    switch (bank_format)
+                    {
+                        case "pcm8":
+                            byteInfo = transform_pcm16_pcm8(WaveData, out samplesCount, wData.loop_start, out last, out penult);
+                            wData.format = 2;
+                            break;
+                        case "adpcm4":
+                            byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount, wData.loop_start, out last, out penult);
+                            wData.format = 0;
+                            break;
+                        default:
+                            cmdarg.assert("Unknown encode format '{0}'", bank_format);
+                            break;
+                    }
+                    
+                    wData.last = 0;
+                    wData.penult = 0;
+           
                     adpcm_data = byteInfo;
                     wData.sampleRate = WaveData.sampleRate;
                     wData.sampleCount = samplesCount; // __wow__
@@ -145,7 +190,7 @@ namespace wsysbuilder
                     cmdarg.assert(!File.Exists(reffile), "ABORT: Could not find reference file: {0} (Either custom WAV or ADP needed for rebuild, no empties)", reffile);
                     adpcm_data = File.ReadAllBytes(reffile);
                 }
-                var necessary_size = (wData.sampleCount / 16) * 9; 
+
                 wData.wsys_start = (int)awOutHnd.Position;
                 wData.wsys_size = adpcm_data.Length;
                 awOutHnd.Write(adpcm_data, 0, adpcm_data.Length);

@@ -22,8 +22,8 @@ namespace wsysbuilder
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;
-
-
+   
+            //Console.ReadLine();
             Console.WriteLine("wsystool JAudio WSYS packer / unpacker");
             //util.consoleProgress("Test", 50, 100);
             //Console.ReadLine();
