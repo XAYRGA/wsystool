@@ -26,6 +26,11 @@ namespace wsysbuilder
             var path = Path.GetFullPath(output_file);
             var dir = Path.GetDirectoryName(path);
             var fname = Path.GetFileName(output_file);
+            try
+            {
+                Directory.Delete($"{dir}/aw_{fname}", true);
+            }
+            catch { }// whatever
             Directory.CreateDirectory($"{dir}/aw_{fname}");
             return $"{dir}/aw_{fname}";
         }
@@ -49,6 +54,8 @@ namespace wsysbuilder
 
             last = 0;
             penult = 0;
+            int absolute = 0;
+            int pcmLast = 0;
             //Console.WriteLine($"\n\n\n{WaveData.sampleCount} samples\n{frameCount} frames.\n{frameBufferSize} bytes\n{adjustedFrameBufferSize} padded bytes. ");
             var adp_f_pos = 0; // ADPCM position
 
@@ -73,17 +80,74 @@ namespace wsysbuilder
 
                     wavIn[k] = wavFP[ (ix*16) + k];
                 }
+
                 // build ADPCM frame
                 bananapeel.Pcm16toAdpcm4(wavIn, adpcmOut, ref lastSample, ref penultimate); // convert PCM16 -> ADPCM4
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut, ref lastSample, ref penultimate, ref pcmLast);
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut);
                 for (int k = 0; k < 9; k++)
                 {
                     adpcm_data[adp_f_pos] = adpcmOut[k]; // dump into ADPCM buffer.
+                    //Console.WriteLine(adpcmOut[k]);
                     adp_f_pos++; // increment ADPCM byte
                 }
             }
             return adpcm_data;
         }
 
+        public static byte[] transform_pcm16_mono_adpcm_hle(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
+        {
+            //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
+
+
+            int frameCount = (WaveData.sampleCount + 16 - 1) / 16;
+            adjustedSampleCount = frameCount * 16; // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
+            var frameBufferSize = frameCount * 9; // and we know the amount of bytes that the buffer will take.
+            var adjustedFrameBufferSize = frameBufferSize; //+ (frameBufferSize % 32); // pads buffer to 32 bytes. 
+            byte[] adpcm_data = new byte[adjustedFrameBufferSize + 18]; // 9 bytes per 16 samples 
+
+            last = 0;
+            penult = 0;
+            int absolute = 0;
+            int pcmLast = 0;
+            //Console.WriteLine($"\n\n\n{WaveData.sampleCount} samples\n{frameCount} frames.\n{frameBufferSize} bytes\n{adjustedFrameBufferSize} padded bytes. ");
+            var adp_f_pos = 0; // ADPCM position
+
+            var lastSample = 0;
+            var penultimate = 0;
+
+            var wavFP = WaveData.buffer;
+            // transform one frame at a time
+            for (int ix = 0; ix < frameCount; ix++)
+            {
+                short[] wavIn = new short[16];
+                byte[] adpcmOut = new byte[9];
+                for (int k = 0; k < 16; k++)
+                {
+                    if (((ix * 16) + k) >= WaveData.sampleCount)
+                        continue; // skip if we're out of samplebuffer, continue to build last frame
+                    if ((ix * 16) + k == loopRetSample)
+                    {
+                        last = lastSample;
+                        penult = penultimate;
+                    }
+
+                    wavIn[k] = wavFP[(ix * 16) + k];
+                }
+
+                // build ADPCM frame
+                bananapeel.Pcm16toAdpcm4HLE(wavIn, adpcmOut, ref lastSample, ref penultimate); // convert PCM16 -> ADPCM4
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut, ref lastSample, ref penultimate, ref pcmLast);
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut);
+                for (int k = 0; k < 9; k++)
+                {
+                    adpcm_data[adp_f_pos] = adpcmOut[k]; // dump into ADPCM buffer.
+                    //Console.WriteLine(adpcmOut[k]);
+                    adp_f_pos++; // increment ADPCM byte
+                }
+            }
+            return adpcm_data;
+        }
 
         public static byte[] transform_pcm16_pcm8(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
         {
@@ -110,7 +174,8 @@ namespace wsysbuilder
         private static JWaveDescriptor[] build_aw(string outFile, string projFolder,  minifiedScene scnData, Dictionary<int,JWaveDescriptor> waveTable, string awOutput) 
         {
 
-            var bank_format = cmdarg.findDynamicStringArgument("--encode-format", "pcm8");
+            var bank_format = cmdarg.findDynamicStringArgument("--encode-format", "adpcm4_hle");
+         
             var awOutHnd = File.Open($"{awOutput}/{scnData.awfile}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             var awPadding = cmdarg.findDynamicNumberArgument("-awpadding", 32);
             var awOutWt = new BeBinaryWriter(awOutHnd);
@@ -137,6 +202,7 @@ namespace wsysbuilder
                     var strm = File.OpenRead(cWaveFile);
                     var strmInt = new BinaryReader(strm);
 
+                    Console.WriteLine(cWaveFile);
                     var WaveData = PCM16WAV.readStream(strmInt);
                     if (WaveData == null)
                         cmdarg.assert($"ABORT: '{cWaveFile} has invalid format.");
@@ -160,8 +226,8 @@ namespace wsysbuilder
                     last = 0;
                     penult = 0;
 
-                    var byteInfo = new byte[0]; 
-                    
+                    var byteInfo = new byte[0];
+                  
                     switch (bank_format)
                     {
                         case "pcm8":
@@ -172,6 +238,10 @@ namespace wsysbuilder
                             byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 0;
                             break;
+                        case "adpcm4_hle":
+                            byteInfo = transform_pcm16_mono_adpcm_hle(WaveData, out samplesCount, wData.loop_start, out last, out penult);
+                            wData.format = 0;
+                            break;                            
                         default:
                             cmdarg.assert("Unknown encode format '{0}'", bank_format);
                             break;

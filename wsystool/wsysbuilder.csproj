@@ -67,6 +67,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="bananapeel\banan_brawl.cs" />
     <Compile Include="bananapeel\banan_wave.cs" />
     <Compile Include="beio\BeBinaryReader.cs" />
     <Compile Include="beio\BeBinaryWriter.cs" />

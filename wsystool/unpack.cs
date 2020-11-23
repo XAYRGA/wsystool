@@ -51,11 +51,6 @@ namespace wsysbuilder
             return null;
         }
 
-        public static void writeWSGrp(JWaveSystem sys, JWaveGroup grp, JWaveScene scn, string fn, string projfol)
-        {
-
-        }
-
 
         public static short[] ADPCM42PCM16(byte[] adpdata)
         {
@@ -178,7 +173,17 @@ namespace wsysbuilder
 
                             waveTable[cData.waveid] = wData;
 
-                            var pcmFinal = ADPCM42PCM16(dat);
+                            var pcmFinal = new short[0];
+                            switch (wData.format)
+                            {
+                                case 0: // ADPCM4
+                                    pcmFinal = ADPCM42PCM16(dat);
+                                    break;
+                                case 2: // PCM8
+                                    pcmFinal = ADPCM42PCM16(dat);
+                                    break;
+
+                            }
 
                             var nwf = new PCM16WAV()
                             {
@@ -203,8 +208,6 @@ namespace wsysbuilder
                                     dwType = 0
                                 };
                             }
-
-
 
                             var fileData = File.OpenWrite($"{projFolder}/wav/{cData.waveid}.wav");
                             var fileWriter = new BinaryWriter(fileData);

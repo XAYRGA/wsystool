@@ -11,13 +11,14 @@ namespace wsysbuilder
     {
         static void Main(string[] args)
         {
-#if NOWAY
+#if DEBUG
             args = new string[] {
                 "pack",
                 @"Z:\twipri\files\Audiores\Audio_modding/MusicSamples",
                 @"Z:\twipri\files\Audiores\Audio_modding\include\3.wsy",
-                "-awpath",
-                "./Waves"
+                "--encode-format",
+                "adpcm4"
+
             };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 

@@ -63,6 +63,157 @@ namespace wsysbuilder
 			return (short)sample;
 		}
 
+		public static void Pcm16toAdpcm4HLE(short[] pcm16, byte[] adpcm4, ref int last, ref int penult)
+		{
+			// check if all samples in frame are zero
+			// if so, write out an empty adpcm frame
+			if (pcm16.All(sample => sample == 0))
+			{
+				for (var i = 0; i < 9; ++i)
+				{
+					adpcm4[i] = 0;
+				}
+
+				last = 0;
+				penult = 0;
+
+				return;
+			}
+
+			var pcm4 = false;
+			var nibbles = new int[16];
+			int coeffIndex = 0, scale = 0;
+
+			// try to use coefficient zero for static silence
+			for (var i = 0; i < 3; ++i)
+			{
+				var step = (1 << i);
+				var range = (8 << i);
+
+				if (pcm16.All(sample => sample >= -range && sample < range))
+				{
+					pcm4 = true;
+					coeffIndex = 0;
+					scale = i;
+					break;
+				}
+			}
+
+			if (!pcm4)
+			{
+				coeffIndex = -1;
+				var minerror = Int32.MaxValue;
+
+				// otherwise, select one of the remaining coefficients by smallest error
+				for (var coeff = 1; coeff < 16; ++coeff)
+				{
+					var lastCoeff = sAdpcmCoefficents[coeff, 0];
+					var penultCoeff = sAdpcmCoefficents[coeff, 1];
+					var found_scale = -1;
+					var coeff_error = 0;
+
+					// select the first scale that fits all differences
+					for (var current_scale = 0; current_scale < 16; ++current_scale)
+					{
+						var step = (1 << current_scale);
+						var nibbleCoeff = (2048 << current_scale);
+						var success = true;
+						coeff_error = 0;
+
+						// use non-ref copies
+						var _last = last;
+						var _penult = penult;
+
+						for (var i = 0; i < 16; ++i)
+						{
+							var prediction = ClampSample16Bit((lastCoeff * _last + penultCoeff * _penult) >> 11);
+							var difference = -(prediction - pcm16[i]); // negate because we need to counteract it
+							var nibble = (difference / step);
+
+							if (nibble < -8 || nibble > 7)
+							{
+								success = false;
+								break;
+							}
+							var nibbleSample = (nibble * nibbleCoeff);
+							var decoded = ClampSample16Bit(((nibbleSample) + lastCoeff * _last + penultCoeff * _penult) >> 11);
+
+							_penult = _last;
+							_last = decoded;
+
+							// don't let +/- differences cancel each other out
+							coeff_error += Math.Abs(difference);
+						}
+
+						if (success)
+						{
+							found_scale = current_scale;
+							break;
+						}
+					}
+
+					//coeff_error = coeff_error / 16;
+
+					if (found_scale < 0)
+					{
+						continue;
+					}
+
+					if (coeff_error < minerror)
+					{
+						minerror = coeff_error;
+						coeffIndex = coeff;
+						scale = found_scale;
+					}
+				}
+
+				if (coeffIndex < 0)
+				{
+					var sb = new StringBuilder(256);
+					sb.Append("could not find coefficient!\nPCM16:");
+
+					for (var i = 0; i < 16; ++i)
+					{
+						sb.AppendFormat(" {0,6}", pcm16[i]);
+					}
+
+					sb.AppendFormat("\nLAST: {0,6} PENULT: {1,6}\n", last, penult);
+
+					Console.WriteLine(sb.ToString());
+				}
+			}
+
+			{
+				// calculate each delta and write to the nibbles
+				var lastCoeff = sAdpcmCoefficents[coeffIndex, 0];
+				var penultCoeff = sAdpcmCoefficents[coeffIndex, 1];
+
+				var step = (1 << scale);
+
+				for (var i = 0; i < 16; ++i)
+				{
+					var prediction = ClampSample16Bit((lastCoeff * last + penultCoeff * penult) >> 11);
+					var difference = -(prediction - pcm16[i]); // negate because we need to counteract it
+					nibbles[i] = (difference / step);
+					var nibbleSample = (nibbles[i] * (2048 << scale));
+					var decoded = ClampSample16Bit((nibbleSample + lastCoeff * last + penultCoeff * penult) >> 11);
+
+					penult = last;
+					last = decoded;
+				}
+			}
+
+			// write out adpcm bytes
+			adpcm4[0] = (byte)((scale << 4) | coeffIndex);
+
+			for (var i = 0; i < 8; ++i)
+			{
+				adpcm4[1 + i] = (byte)(((nibbles[i * 2] << 4) & 0xF0) | (nibbles[i * 2 + 1] & 0xF));
+			}
+		}
+
+
+
 		public static void Pcm16toAdpcm4(short[] pcm16, byte[] adpcm4, ref int last, ref int penult)
 		{
 			// check if all samples in frame are zero
@@ -135,14 +286,14 @@ namespace wsysbuilder
 								success = false;
 								break;
 							}
-
-							var decoded = ClampSample16Bit((nibbleCoeff * nibble + lastCoeff * _last + penultCoeff * _penult) >> 11);
+							var nibbleSample = (nibble * nibbleCoeff);
+							var decoded = ClampSample16Bit(((nibbleSample) + lastCoeff * _last + penultCoeff * _penult) >> 11);
 
 							_penult = _last;
 							_last = decoded;
 
 							// don't let +/- differences cancel each other out
-							coeff_error += System.Math.Abs(difference);
+							coeff_error += Math.Abs(difference * difference / 2);
 						}
 
 						if (success)
@@ -151,6 +302,8 @@ namespace wsysbuilder
 							break;
 						}
 					}
+
+					//coeff_error = coeff_error / 16;
 
 					if (found_scale < 0)
 					{
@@ -193,8 +346,8 @@ namespace wsysbuilder
 					var prediction = ClampSample16Bit((lastCoeff * last + penultCoeff * penult) >> 11);
 					var difference = -(prediction - pcm16[i]); // negate because we need to counteract it
 					nibbles[i] = (difference / step);
-
-					var decoded = ClampSample16Bit((nibbles[i] * (2048 << scale) + lastCoeff * last + penultCoeff * penult) >> 11);
+					var nibbleSample = (nibbles[i] * (2048 << scale)) ;
+					var decoded = ClampSample16Bit((nibbleSample + lastCoeff * last + penultCoeff * penult) >> 11);
 
 					penult = last;
 					last = decoded;
@@ -210,152 +363,7 @@ namespace wsysbuilder
 			}
 		}
 
-		public static void Pcm16toAdpcm2(short[] pcm16, byte[] adpcm2, ref int last, ref int penult)
-		{
-			// check if all samples in frame are zero
-			// if so, write out an empty adpcm frame
-			if (pcm16.All(sample => sample == 0))
-			{
-				for (var i = 0; i < 5; ++i)
-				{
-					adpcm2[i] = 0;
-				}
 
-				last = 0;
-				penult = 0;
-
-				return;
-			}
-
-			var pcm4 = false;
-			var nibbles = new int[16];
-			int coeffIndex = 0, scale = 0;
-
-			// try to use coefficient zero for static silence
-			for (var i = 0; i < 2; ++i)
-			{
-				var step = (1 << i);
-				var range = (2 << i);
-
-				if (pcm16.All(sample => sample >= -range && sample < range))
-				{
-					pcm4 = true;
-					coeffIndex = 0;
-					scale = i;
-					break;
-				}
-			}
-
-			if (!pcm4)
-			{
-				coeffIndex = -1;
-				var minerror = Int32.MaxValue;
-
-				// otherwise, select one of the remaining coefficients by smallest error
-				for (var coeff = 1; coeff < 16; ++coeff)
-				{
-					var lastCoeff = sAdpcmCoefficents[coeff, 0];
-					var penultCoeff = sAdpcmCoefficents[coeff, 1];
-					var found_scale = -1;
-					var coeff_error = 0;
-
-					// select the first scale that fits all differences
-					for (var current_scale = 0; current_scale < 16; ++current_scale)
-					{
-						var step = (1 << current_scale);
-						var nibbleCoeff = (8192 << current_scale);
-						var success = true;
-						coeff_error = 0;
-
-						// use non-ref copies
-						var _last = last;
-						var _penult = penult;
-
-						for (var i = 0; i < 16; ++i)
-						{
-							var prediction = ClampSample16Bit((lastCoeff * _last + penultCoeff * _penult) >> 11);
-							var difference = -(prediction - pcm16[i]); // negate because we need to counteract it
-							var nibble = (difference / step);
-
-							if (nibble < -2 || nibble > 1)
-							{
-								success = false;
-								break;
-							}
-
-							var decoded = ClampSample16Bit((nibbleCoeff * nibble + lastCoeff * _last + penultCoeff * _penult) >> 11);
-
-							_penult = _last;
-							_last = decoded;
-
-							// don't let +/- differences cancel each other out
-							coeff_error += System.Math.Abs(difference);
-						}
-
-						if (success)
-						{
-							found_scale = current_scale;
-							break;
-						}
-					}
-
-					if (found_scale < 0)
-					{
-						continue;
-					}
-
-					if (coeff_error < minerror)
-					{
-						minerror = coeff_error;
-						coeffIndex = coeff;
-						scale = found_scale;
-					}
-				}
-
-				if (coeffIndex < 0)
-				{
-					var sb = new StringBuilder(256);
-					sb.Append("could not find coefficient!\nPCM16:");
-
-					for (var i = 0; i < 16; ++i)
-					{
-						sb.AppendFormat(" {0,6}", pcm16[i]);
-					}
-
-					sb.AppendFormat("\nLAST: {0,6} PENULT: {1,6}\n", last, penult);
-
-					Console.WriteLine(sb.ToString());
-				}
-			}
-
-			{
-				// calculate each delta and write to the nibbles
-				var lastCoeff = sAdpcmCoefficents[coeffIndex, 0];
-				var penultCoeff = sAdpcmCoefficents[coeffIndex, 1];
-
-				var step = (1 << scale);
-
-				for (var i = 0; i < 16; ++i)
-				{
-					var prediction = ClampSample16Bit((lastCoeff * last + penultCoeff * penult) / 2048);
-					var difference = -(prediction - pcm16[i]); // negate because we need to counteract it
-					nibbles[i] = (difference / step);
-
-					var decoded = ClampSample16Bit((nibbles[i] * (8192 << scale) + lastCoeff * last + penultCoeff * penult) / 2048);
-
-					penult = last;
-					last = decoded;
-				}
-			}
-
-			// write out adpcm bytes
-			adpcm2[0] = (byte)((scale << 4) | coeffIndex);
-
-			for (var i = 0; i < 4; ++i)
-			{
-				adpcm2[1 + i] = (byte)(((nibbles[i * 2] << 4) & 0xC0) | ((nibbles[i * 2 + 1] << 4) & 0x30) | ((nibbles[i * 2 + 2] << 4) & 0x0C) | (nibbles[i * 2 + 3] & 0x03));
-			}
-		}
 		public static void Adpcm4toPcm16(byte[] adpcm4, short[] pcm16, ref int last, ref int penult)
 		{
 			var header = adpcm4[0];
