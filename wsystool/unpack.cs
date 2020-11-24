@@ -73,7 +73,32 @@ namespace wsysbuilder
             return smplBuff; // return
         }
 
-    
+
+
+        public static short[] PCM8216(byte[] adpdata)
+        {          
+            short[] smplBuff = new short[adpdata.Length]; // Initialize container for samples
+            for (int sam = 0; sam < adpdata.Length; sam++) // Increment samples in blocks of 16
+            {
+                smplBuff[sam] = (short)(adpdata[sam] * (adpdata[sam] < 0 ? 256 : 258));  
+            }
+            return smplBuff; // return
+        }
+
+        public unsafe static short[] PCM16ByteToShort(byte[] pcm)
+        {
+            var pcmS = new short[ (pcm.Length / 2) + 1];
+            fixed (byte* pcmD = pcm)
+            {
+                var pcmBy = (short*)pcmD;
+                for (int i=0; i < pcm.Length;i++)
+                {
+                    pcmS[i] = pcmBy[i];
+                }
+            }
+            return pcmS;
+        }
+
 
         public static unsafe void unpack_do(string filename, string projFolder)
         {
@@ -150,7 +175,7 @@ namespace wsysbuilder
             }
 
 
-            if (!cmdarg.findDynamicFlagArgument("--skip-transform"))
+            if (!cmdarg.findDynamicFlagArgument("-skip-transform"))
             {
                 Console.WriteLine("Transforming ADPCM data.... (may take a while)");
                 for (int cWI = 0; cWI < WaveSystem.Groups.Length; cWI++)
@@ -179,10 +204,18 @@ namespace wsysbuilder
                                 case 0: // ADPCM4
                                     pcmFinal = ADPCM42PCM16(dat);
                                     break;
-                                case 2: // PCM8
-                                    pcmFinal = ADPCM42PCM16(dat);
+                                case 1:
+                                    cmdarg.assert("ADPCM2 format is currently not supported.");
                                     break;
-
+                                case 2: // PCM8
+                                    pcmFinal = PCM8216(dat);
+                                    break;
+                                case 3: // PCM16
+                                    pcmFinal = PCM16ByteToShort(dat);
+                                    break;
+                                default:
+                                    cmdarg.assert($"Unknown decode format {wData.format}");
+                                    break;
                             }
 
                             var nwf = new PCM16WAV()

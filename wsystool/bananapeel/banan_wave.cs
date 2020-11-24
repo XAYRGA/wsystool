@@ -179,6 +179,9 @@ namespace wsysbuilder
                     var nextSZ = br.ReadInt32();
                     if (br.BaseStream.Position + nextSZ >= br.BaseStream.Length)
                         return -1;
+#if DEBUG
+                    Console.WriteLine($"{nextSZ:X} @ {br.BaseStream.Position:X}");
+#endif
                     br.BaseStream.Position += nextSZ;
                 }
                 else

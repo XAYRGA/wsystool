@@ -21,7 +21,7 @@ namespace wsysbuilder
         {
             for (int i = 0; i < cmdargs.Length; i++)
             {
-                if (cmdargs[i] == name)
+                if (cmdargs[i] == name || cmdargs[i] == "-" + name)
                 {
                     if (cmdargs.Length >= i + 1)
                     {
@@ -38,7 +38,7 @@ namespace wsysbuilder
         {
             for (int i = 0; i < cmdargs.Length; i++)
             {
-                if (cmdargs[i] == name)
+                if (cmdargs[i] == name || cmdargs[i] == "-" + name)
                 {
                     if (cmdargs.Length < i + 1)
                     {
@@ -64,7 +64,7 @@ namespace wsysbuilder
         {
             for (int i = 0; i < cmdargs.Length; i++)
             {
-                if (cmdargs[i] == name)
+                if (cmdargs[i] == name || cmdargs[i] == "-" + name )
                 {
                     return true;
                 }

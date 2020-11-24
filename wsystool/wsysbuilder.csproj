@@ -67,7 +67,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="bananapeel\banan_brawl.cs" />
     <Compile Include="bananapeel\banan_wave.cs" />
     <Compile Include="beio\BeBinaryReader.cs" />
     <Compile Include="beio\BeBinaryWriter.cs" />
@@ -96,6 +95,9 @@
     <Content Include="licenses\mareep.txt" />
     <Content Include="licenses\newtonsoft.Json.txt" />
     <Content Include="licenses\wsystool.txt" />
+    <Content Include="README_WSYSTOOL.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="wsystool.ico" />
     <None Include="App.config" />
     <None Include="beio\license.bsd" />

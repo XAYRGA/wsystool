@@ -14,10 +14,10 @@ namespace wsysbuilder
 #if DEBUG
             args = new string[] {
                 "pack",
-                @"Z:\twipri\files\Audiores\Audio_modding/MusicSamples",
-                @"Z:\twipri\files\Audiores\Audio_modding\include\3.wsy",
+                @"E:\DOLPHIN\root\mkdd\files\AudioRes\Audio_Modding\SoundEffects",
+                @"E:\DOLPHIN\root\mkdd\files\AudioRes\test3.wsy",
                 "--encode-format",
-                "adpcm4"
+                "adpcm4hle"
 
             };
 #endif
@@ -45,7 +45,7 @@ namespace wsysbuilder
                     HelpManifest.print_general();
                     break;
                 default:
-                    Console.WriteLine($"Unknown operation '{operation}'. See 'wsystool help'");
+                    Console.WriteLine($"Unknown operation '{operation}'. See 'wsysbuilder help'");
                     break;
             }
         }

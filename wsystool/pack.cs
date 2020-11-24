@@ -174,7 +174,7 @@ namespace wsysbuilder
         private static JWaveDescriptor[] build_aw(string outFile, string projFolder,  minifiedScene scnData, Dictionary<int,JWaveDescriptor> waveTable, string awOutput) 
         {
 
-            var bank_format = cmdarg.findDynamicStringArgument("--encode-format", "adpcm4_hle");
+            var bank_format = cmdarg.findDynamicStringArgument("-encode-format", "adpcm4hle");
          
             var awOutHnd = File.Open($"{awOutput}/{scnData.awfile}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             var awPadding = cmdarg.findDynamicNumberArgument("-awpadding", 32);
@@ -201,8 +201,8 @@ namespace wsysbuilder
                 {
                     var strm = File.OpenRead(cWaveFile);
                     var strmInt = new BinaryReader(strm);
-
                     Console.WriteLine(cWaveFile);
+                   // Console.WriteLine(cWaveFile);
                     var WaveData = PCM16WAV.readStream(strmInt);
                     if (WaveData == null)
                         cmdarg.assert($"ABORT: '{cWaveFile} has invalid format.");
@@ -238,7 +238,7 @@ namespace wsysbuilder
                             byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 0;
                             break;
-                        case "adpcm4_hle":
+                        case "adpcm4hle":
                             byteInfo = transform_pcm16_mono_adpcm_hle(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 0;
                             break;                            
