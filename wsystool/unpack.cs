@@ -87,12 +87,15 @@ namespace wsysbuilder
 
         public unsafe static short[] PCM16ByteToShort(byte[] pcm)
         {
-            var pcmS = new short[ (pcm.Length / 2) + 1];
+            //var pcmS = new short[ (pcm.Length / 2) + 1];
+            var pcmS = new short[(pcm.Length + 2 - 1) / 2];
+
             fixed (byte* pcmD = pcm)
             {
                 var pcmBy = (short*)pcmD;
-                for (int i=0; i < pcm.Length;i++)
-                {
+                //for (int i=0; i < pcm.Length;i++)
+                for (int i = 0; i < pcmS.Length; i++)
+                    {
                     pcmS[i] = pcmBy[i];
                 }
             }
