@@ -29,8 +29,8 @@ namespace wsysbuilder
             Directory.CreateDirectory($"{path}/scenes");
             File.WriteAllText($"{path}/ref/__DO_NOT_TOUCH_THESE_FILES.txt", "Don't touch these files, they are used to reference the rebuild data.");
             File.WriteAllText($"{path}/custom/__PUT_WAV_FILES_IN_HERE.txt", "These files will overwrite the ones in the game when the ws is rebuilt.");
-            File.WriteAllText($"{path}/wav/__README.txt", "These files aren't used for anything other than listening.\nModifying these will have no affect on the game.\nIf you modify one of these, move it to the 'rep' folder for it to take place in game.");
-            File.WriteAllText($"{path}/__README.txt", "Don't manually modify the .wso file, it's a running copy of the WS in your current project state, and is used to rebuild the WSdata\n\nRead the readme's in the other folder.");
+            File.WriteAllText($"{path}/wav/__README.txt", "These files aren't used for anything other than listening.\nModifying these will have no affect on the game.\nIf you modify one of these, move it to the 'custom' folder for it to take place in game.");
+            File.WriteAllText($"{path}/__README.txt", "Read the readme's in the other folder.");
         }
 
         private static Stream getAWFileHandle(string basen,string name)
@@ -52,7 +52,7 @@ namespace wsysbuilder
         }
 
 
-        public static short[] ADPCM42PCM16(byte[] adpdata)
+        public static short[] ADPCM4toPCM16(byte[] adpdata)
         {
             var totalSamples = ( (adpdata.Length / 9) * 16) ; /// ADPCM Frames are 9 bytes length, comes out to 16 short samples. 
             var frameOffset = 0;  // Initialize 0 frame offset
@@ -73,6 +73,26 @@ namespace wsysbuilder
             return smplBuff; // return
         }
 
+        public static short[] ADPCM2toPCM16(byte[] adpdata)
+        {
+            var totalSamples = ((adpdata.Length / 5) * 16); /// ADPCM Frames are 9 bytes length, comes out to 16 short samples. 
+            var frameOffset = 0;  // Initialize 0 frame offset
+            short[] smplBuff = new short[totalSamples]; // Initialize container for samples
+            int pen = 0; // penultimate
+            int last = 0; // last sample
+            for (int sam = 0; sam < totalSamples; sam += 16) // Increment samples in blocks of 16
+            {
+                byte[] adpcm4 = new byte[5]; // 9 ADPCM frame
+                short[] sample = new short[16]; // 16 PCM frame
+                for (int i = 0; i < 5; i++) // sprawl out ADPCM Frame
+                    adpcm4[i] = adpdata[frameOffset + i]; // ^
+                frameOffset += 5; // Increment to next frame (0 indexed)
+                bananapeel.Adpcm2toPcm16(adpcm4, sample, ref last, ref pen); // transform, store in "sample"
+                for (int i = 0; i < 16; i++)  // sprawl out PCM sample into sample buffer
+                    smplBuff[sam + i] = sample[i]; // ^
+            }
+            return smplBuff; // return
+        }
 
 
         public static short[] PCM8216(byte[] adpdata)
@@ -95,7 +115,7 @@ namespace wsysbuilder
                 var pcmBy = (short*)pcmD;
                 //for (int i=0; i < pcm.Length;i++)
                 for (int i = 0; i < pcmS.Length; i++)
-                    {
+                {
                     pcmS[i] = pcmBy[i];
                 }
             }
@@ -178,7 +198,7 @@ namespace wsysbuilder
             }
 
 
-            if (!cmdarg.findDynamicFlagArgument("-skip-transform"))
+            var skipTF = cmdarg.findDynamicFlagArgument("-skip-transform");
             {
                 Console.WriteLine("Transforming ADPCM data.... (may take a while)");
                 for (int cWI = 0; cWI < WaveSystem.Groups.Length; cWI++)
@@ -200,15 +220,17 @@ namespace wsysbuilder
                             //var crc = crc32.ComputeChecksum(dat);
 
                             waveTable[cData.waveid] = wData;
-
+                            if (skipTF)
+                                continue;
                             var pcmFinal = new short[0];
                             switch (wData.format)
                             {
                                 case 0: // ADPCM4
-                                    pcmFinal = ADPCM42PCM16(dat);
+                                    pcmFinal = ADPCM4toPCM16(dat);
                                     break;
-                                case 1:
-                                    cmdarg.assert("ADPCM2 format is currently not supported.");
+                                case 1: // ADPCM2 (thanks, sunshine)
+                                    pcmFinal = ADPCM2toPCM16(dat);                                   
+                                    Console.WriteLine($"\n! Transforming ADPCM2 is not fully supported, wave {cData.waveid} might be corrupted. This will not affect re-packing.");
                                     break;
                                 case 2: // PCM8
                                     pcmFinal = PCM8216(dat);
@@ -254,6 +276,7 @@ namespace wsysbuilder
                             wavHash[cData.waveid] = true;
                         }
                         util.consoleProgress($"\t->Transform ({cGrp.awFile})", i, cGrp.Waves.Length - 1, true);
+              
 
                     }
                     Console.WriteLine();

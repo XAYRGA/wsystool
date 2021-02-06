@@ -14,16 +14,15 @@ namespace wsysbuilder
 #if DEBUG
             args = new string[] {
                 "pack",
-                @"E:\DOLPHIN\root\mkdd\files\AudioRes\Audio_Modding\SoundEffects",
-                @"E:\DOLPHIN\root\mkdd\files\AudioRes\test3.wsy",
-                "--encode-format",
-                "adpcm4hle"
+                @"ipl_proj2",
+                @"ipl_modernws.ws",
+
 
             };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;
-   
+
             //Console.ReadLine();
             Console.WriteLine("wsystool JAudio WSYS packer / unpacker");
             //util.consoleProgress("Test", 50, 100);
@@ -48,6 +47,7 @@ namespace wsysbuilder
                     Console.WriteLine($"Unknown operation '{operation}'. See 'wsysbuilder help'");
                     break;
             }
+
         }
     }
 }

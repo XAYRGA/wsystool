@@ -35,6 +35,39 @@ namespace wsysbuilder
             return $"{dir}/aw_{fname}";
         }
 
+        public static void assertHalt(bool cond, string err)
+        {
+            if (cond == false)
+                return;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(err);
+            Console.Beep(1500,500);
+   
+            Console.ReadLine();
+            Environment.Exit(0);
+        }
+
+        public static void assertHalt(bool cond, string err, params object[] ob)
+        {
+            if (cond == false)
+                return;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(err, ob);
+            Console.Beep(1500, 500);
+            Console.ReadLine();
+            Environment.Exit(0);
+        }
+
+
+        public static void assertHaltStr(string err, params object[] ob)
+        {
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(err, ob);
+            Console.Beep(1500, 500);
+            Console.ReadLine();
+            Environment.Exit(0);
+        }
         public static byte[] transform_pcm16_mono_adpcm(PCM16WAV WaveData, out int adjustedSampleCount)
         {
             int last = 0;
@@ -95,7 +128,7 @@ namespace wsysbuilder
             return adpcm_data;
         }
 
-        public static byte[] transform_pcm16_mono_adpcm_hle(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
+        public static byte[] transform_pcm16_mono_adpcm4_hle(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
         {
             //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
 
@@ -140,6 +173,61 @@ namespace wsysbuilder
                 //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut, ref lastSample, ref penultimate, ref pcmLast);
                 //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut);
                 for (int k = 0; k < 9; k++)
+                {
+                    adpcm_data[adp_f_pos] = adpcmOut[k]; // dump into ADPCM buffer.
+                    //Console.WriteLine(adpcmOut[k]);
+                    adp_f_pos++; // increment ADPCM byte
+                }
+            }
+            return adpcm_data;
+        }
+
+
+        public static byte[] transform_pcm16_mono_adpcm2_hle(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
+        {
+            //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
+
+
+            int frameCount = (WaveData.sampleCount + 16 - 1) / 16;
+            adjustedSampleCount = frameCount * 16; // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
+            var frameBufferSize = frameCount * 5; // and we know the amount of bytes that the buffer will take.
+            var adjustedFrameBufferSize = frameBufferSize; //+ (frameBufferSize % 32); // pads buffer to 32 bytes. 
+            byte[] adpcm_data = new byte[adjustedFrameBufferSize + 10]; // 9 bytes per 16 samples 
+
+            last = 0;
+            penult = 0;
+            int absolute = 0;
+            int pcmLast = 0;
+            //Console.WriteLine($"\n\n\n{WaveData.sampleCount} samples\n{frameCount} frames.\n{frameBufferSize} bytes\n{adjustedFrameBufferSize} padded bytes. ");
+            var adp_f_pos = 0; // ADPCM position
+
+            var lastSample = 0;
+            var penultimate = 0;
+
+            var wavFP = WaveData.buffer;
+            // transform one frame at a time
+            for (int ix = 0; ix < frameCount; ix++)
+            {
+                short[] wavIn = new short[16];
+                byte[] adpcmOut = new byte[5];
+                for (int k = 0; k < 16; k++)
+                {
+                    if (((ix * 16) + k) >= WaveData.sampleCount)
+                        continue; // skip if we're out of samplebuffer, continue to build last frame
+                    if ((ix * 16) + k == loopRetSample)
+                    {
+                        last = lastSample;
+                        penult = penultimate;
+                    }
+
+                    wavIn[k] = wavFP[(ix * 16) + k];
+                }
+
+                // build ADPCM frame
+                bananapeel.Pcm16toAdpcm2(wavIn, adpcmOut, ref lastSample, ref penultimate); // convert PCM16 -> ADPCM4
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut, ref lastSample, ref penultimate, ref pcmLast);
+                //banan_brawl.encode_adpcm_16_managed(wavIn, adpcmOut);
+                for (int k = 0; k < 5; k++)
                 {
                     adpcm_data[adp_f_pos] = adpcmOut[k]; // dump into ADPCM buffer.
                     //Console.WriteLine(adpcmOut[k]);
@@ -205,10 +293,10 @@ namespace wsysbuilder
                    // Console.WriteLine(cWaveFile);
                     var WaveData = PCM16WAV.readStream(strmInt);
                     if (WaveData == null)
-                        cmdarg.assert($"ABORT: '{cWaveFile} has invalid format.");
+                        assertHaltStr($"ABORT: '{cWaveFile} has invalid format.");
 
-                    cmdarg.assert(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
-                    cmdarg.assert(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
+                    assertHalt(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                    assertHalt(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
                     // Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
                     int samplesCount = 0;
 
@@ -234,16 +322,20 @@ namespace wsysbuilder
                             byteInfo = transform_pcm16_pcm8(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 2;
                             break;
+                        case "apdcm2": // And that Eureka moment hits you like a cop caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaar!
+                            byteInfo = transform_pcm16_mono_adpcm2_hle(WaveData, out samplesCount, wData.loop_start, out last, out penult);
+                            wData.format = 1;
+                            break;
                         case "adpcm4":
                             byteInfo = transform_pcm16_mono_adpcm(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 0;
                             break;
                         case "adpcm4hle":
-                            byteInfo = transform_pcm16_mono_adpcm_hle(WaveData, out samplesCount, wData.loop_start, out last, out penult);
+                            byteInfo = transform_pcm16_mono_adpcm4_hle(WaveData, out samplesCount, wData.loop_start, out last, out penult);
                             wData.format = 0;
                             break;                            
                         default:
-                            cmdarg.assert("Unknown encode format '{0}'", bank_format);
+                            assertHaltStr("Unknown encode format '{0}'", bank_format);
                             break;
                     }
                     
@@ -257,7 +349,7 @@ namespace wsysbuilder
                 else
                 {
                     var reffile = $"{projFolder}/ref/{miniIndex}.adp";
-                    cmdarg.assert(!File.Exists(reffile), "ABORT: Could not find reference file: {0} (Either custom WAV or ADP needed for rebuild, no empties)", reffile);
+                    assertHalt(!File.Exists(reffile), "ABORT: Could not find reference file: {0} (Either custom WAV or ADP needed for rebuild, no empties)", reffile);
                     adpcm_data = File.ReadAllBytes(reffile);
                 }
 
@@ -401,8 +493,9 @@ namespace wsysbuilder
         private static int fuck = 0;
         public static unsafe void pack_do(string projFolder, string outfile)
         {
-            cmdarg.assert(!Directory.Exists(projFolder), "Project folder '{0}' could not be found", projFolder);
-            cmdarg.assert(!File.Exists($"{projFolder}/manifest.json"), "Could not find 'manifest.json'") ;
+            assertHalt(!Directory.Exists(projFolder), $"Project folder '{projFolder}' could not be found");
+            assertHalt(!File.Exists($"{projFolder}/manifest.json"), "Could not find 'manifest.json'") ;
+            assertHalt(!File.Exists($"{projFolder}/wavetable.json"), "Could not find 'wavetable.json'");
             int highest_sound_id = 0; // apparently really important.
             string awOutput = null;
             try
