@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace libJAudio
 {
@@ -13,7 +14,9 @@ namespace libJAudio
         public double sampleRate;
         public int sampleCount;
 
+        [JsonIgnore]
         public int wsys_start;
+        [JsonIgnore]
         public int wsys_size;
 
         public bool loop;
@@ -22,9 +25,9 @@ namespace libJAudio
 
         public int last;
         public int penult;
-
+        [JsonIgnore]
         public byte[] pcmData;
-
+        [JsonIgnore]
         public int mOffset;
     }
 
