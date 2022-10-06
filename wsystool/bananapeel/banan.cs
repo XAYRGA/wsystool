@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace wsystool
+namespace wsysbuilder
 {
     public static partial class bananapeel
     {
@@ -32,6 +32,13 @@ namespace wsystool
             0xf704,0xf400,0xf800,0xfc00,
             0x0400,0,0,
          };
+
+
+
+
+
+
+
 
 
         private static byte[] adpcm4topcm16(byte[] data)

@@ -5,25 +5,31 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wsystool
+namespace wsysbuilder
 {
     class Program
     {
         static void Main(string[] args)
         {
 #if DEBUG
-            args = new string[] {
-                "unpack",
-                "./Audio_Modding/include/2.wsy",
-                "test444_proj",
-                "-awpath",
-                "./Waves"
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.WriteLine("!WSYSTOOL build in debug mode, do not push into release!");
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.ForegroundColor = ConsoleColor.Gray;
+
+            args = new string[]
+            {
+                "pack",
+                "WS_CUSTOM",
+                "WSY"
+
             };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;
 
-
+            //Console.ReadLine();
             Console.WriteLine("wsystool JAudio WSYS packer / unpacker");
             //util.consoleProgress("Test", 50, 100);
             //Console.ReadLine();
@@ -44,9 +50,10 @@ namespace wsystool
                     HelpManifest.print_general();
                     break;
                 default:
-                    Console.WriteLine($"Unknown operation '{operation}'. See 'wsystool help'");
+                    Console.WriteLine($"Unknown operation '{operation}'. See 'wsysbuilder help'");
                     break;
             }
+
         }
     }
 }

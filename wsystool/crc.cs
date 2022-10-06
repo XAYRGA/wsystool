@@ -34,7 +34,7 @@ SOFTWARE.
 
 
 
-namespace wsystool
+namespace wsysbuilder
 {
    public static class crc32
    {

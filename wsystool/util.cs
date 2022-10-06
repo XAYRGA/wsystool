@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Be.IO;
 
-namespace wsystool
+namespace wsysbuilder
 {
     public static class util
     {
@@ -24,12 +24,31 @@ namespace wsystool
             if (show_progress)
                 Console.Write($" ({progress}/{max})");           
         }
-        public static void padTo(BeBinaryWriter bw, int padding)
+        public static int padTo(BeBinaryWriter bw, int padding)
         {
-            while ((bw.BaseStream.Position % padding) != 0)
+            int del = 0; 
+            while (bw.BaseStream.Position % 32 != 0)
             {
-                bw.Write((byte)0x00);
+                bw.BaseStream.WriteByte(0x00);
+                bw.BaseStream.Flush();
+                del++;
             }
+            /*
+            var delta = (int)(bw.BaseStream.Position % padding);
+            
+            if (delta == padding || delta==0)
+                return 0;
+            for (int i = 0; i < ( padding - delta ); i++)
+                bw.Write((byte)0x00);
+            return (padding - delta);
+            */
+            return del;
+        }
+
+        public static int padToInt(int Addr, int padding)
+        {
+            var delta = (int)(Addr % padding);
+            return (padding - delta);        
         }
 
     }

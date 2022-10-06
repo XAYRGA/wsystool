@@ -249,6 +249,8 @@ namespace libJAudio.Loaders
             newWave.loop_start = binStream.ReadInt32(); // Even if looping is disabled, it should still read loops
             newWave.loop_end = binStream.ReadInt32(); // Sample index of loop end
             newWave.sampleCount = binStream.ReadInt32(); // Sample count
+            newWave.last = binStream.ReadInt16();
+            newWave.penult = binStream.ReadInt16();
             return newWave;
         }
     }

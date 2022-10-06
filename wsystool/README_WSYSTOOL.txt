@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿db   d8b   db .d8888. db    db .d8888. d8888b. db    db d888888b db      d8888b. d88888b d8888b. 
+88   I8I   88 88'  YP `8b  d8' 88'  YP 88  `8D 88    88   `88'   88      88  `8D 88'     88  `8D 
+88   I8I   88 `8bo.    `8bd8'  `8bo.   88oooY' 88    88    88    88      88   88 88ooooo 88oobY' 
+Y8   I8I   88   `Y8b.    88      `Y8b. 88~~~b. 88    88    88    88      88   88 88~~~~~ 88`8b   
+`8b d8'8b d8' db   8D    88    db   8D 88   8D 88b  d88   .88.   88booo. 88  .8D 88.     88 `88. 
+ `8b8' `8d8'  `8888Y'    YP    `8888Y' Y8888P' ~Y8888P' Y888888P Y88888P Y8888D' Y88888P 88   YD 
 
-namespace wsysbuilder
-{
-    public static class HelpManifest
-    {
-        public static void print_general()
-        {
-            Console.WriteLine(@"
+ Tool for modifying wavesystems in JSystem games. 
+
+
 
 Syntax:
 
@@ -33,9 +32,13 @@ Optional arguments:
 https://www.xayr.ga/tools/
 https://github.com/XAYRGA/wsystool/tree/wsbuilder
                                                                                               
+888  888  8888b.  888  888 888d888   .d88b.   8888b.  
+`Y8bd8P'     "88b 888  888 888P"    d88P"88b     "88b 
+  X88K   .d888888 888  888 888      888  888 .d888888 
+.d8""8b. 888  888 Y88b 888 888  d8b Y88b 888 888  888 
+888  888 "Y888888  "Y88888 888  Y8P  "Y88888 "Y888888 
+                       888               888          
+                  Y8b d88P          Y8b d88P          
+                   "Y88P"            "Y88P" 
 
-");
-        }
 
-    }
-}
