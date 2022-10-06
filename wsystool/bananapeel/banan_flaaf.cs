@@ -67,6 +67,9 @@ namespace wsysbuilder
 		{
 			// check if all samples in frame are zero
 			// if so, write out an empty adpcm frame
+			for (int i = 0; i < pcm16.Length; i++)
+				pcm16[i] = (short)(pcm16[i] * 0.75f);
+
 			if (pcm16.All(sample => sample == 0))
 			{
 				for (var i = 0; i < 9; ++i)
@@ -389,6 +392,10 @@ namespace wsysbuilder
 
 		public static void Pcm16toAdpcm4(short[] pcm16, byte[] adpcm4, ref int last, ref int penult)
 		{
+
+			for (int i = 0; i < pcm16.Length; i++)
+				pcm16[i] = (short)(pcm16[i] * 0.75f);
+
 			// check if all samples in frame are zero
 			// if so, write out an empty adpcm frame
 			if (pcm16.All(sample => sample == 0))

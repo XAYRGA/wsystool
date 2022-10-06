@@ -12,13 +12,11 @@ namespace wsysbuilder
         static void Main(string[] args)
         {
 #if DEBUG
-            args = new string[] {
-                "pack",
-                @"ipl_proj2",
-                @"ipl_modernws.ws",
-
-
-            };
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.WriteLine("!WSYSTOOL build in debug mode, do not push into release!");
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.ForegroundColor = ConsoleColor.Gray;
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;

@@ -59,7 +59,7 @@ namespace wsysbuilder
         }
 
 
-        public static void assertHaltStr(string err, params object[] ob)
+        public static void assertHaltStrImmediate(string err, params object[] ob)
         {
 
             Console.ForegroundColor = ConsoleColor.Red;
@@ -185,8 +185,6 @@ namespace wsysbuilder
 
         public static byte[] transform_pcm16_mono_adpcm2_hle(PCM16WAV WaveData, out int adjustedSampleCount, int loopRetSample, out int last, out int penult)
         {
-            //adpcm_data = new byte[((WaveData.sampleCount / 9) * 16)];
-
 
             int frameCount = (WaveData.sampleCount + 16 - 1) / 16;
             adjustedSampleCount = frameCount * 16; // now that we have a properly calculated frame count, we know the amount of samples that realistically fit into that buffer. 
@@ -284,19 +282,19 @@ namespace wsysbuilder
 
                 byte[] adpcm_data;
 
-                var cWaveFile = $"{projFolder}/custom/{miniIndex}.wav";
-                if (File.Exists(cWaveFile))
+                var sWaveFile = $"{projFolder}/custom/{miniIndex}.wav";
+                if (File.Exists(sWaveFile))
                 {
-                    var strm = File.OpenRead(cWaveFile);
+                    var strm = File.OpenRead(sWaveFile);
                     var strmInt = new BinaryReader(strm);
-                    Console.WriteLine(cWaveFile);
+                    Console.WriteLine(sWaveFile);
                    // Console.WriteLine(cWaveFile);
                     var WaveData = PCM16WAV.readStream(strmInt);
                     if (WaveData == null)
-                        assertHaltStr($"ABORT: '{cWaveFile} has invalid format.");
+                        assertHaltStrImmediate($"ABORT: '{sWaveFile} has invalid format. (Must be PCM16!)");
 
-                    assertHalt(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
-                    assertHalt(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
+                    assertHalt(WaveData.sampleRate < 48000, $"ABORT: '{sWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                    assertHalt(WaveData.channels < 1, $"ABORT: '{sWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
                     // Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
                     int samplesCount = 0;
 
@@ -335,7 +333,7 @@ namespace wsysbuilder
                             wData.format = 0;
                             break;                            
                         default:
-                            assertHaltStr("Unknown encode format '{0}'", bank_format);
+                            assertHaltStrImmediate("Unknown encode format '{0}'", bank_format);
                             break;
                     }
                     
