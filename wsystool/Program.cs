@@ -17,6 +17,14 @@ namespace wsysbuilder
             Console.WriteLine("!WSYSTOOL build in debug mode, do not push into release!");
             Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Console.ForegroundColor = ConsoleColor.Gray;
+
+            args = new string[]
+            {
+                "pack",
+                "WS_CUSTOM",
+                "WSY"
+
+            };
 #endif
             crc32.reset(); // Initialize + preseed CRC32; 
             cmdarg.cmdargs = args;

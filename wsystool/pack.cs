@@ -59,7 +59,7 @@ namespace wsysbuilder
         }
 
 
-        public static void assertHaltStrImmediate(string err, params object[] ob)
+        public static void assertHaltStr(string err, params object[] ob)
         {
 
             Console.ForegroundColor = ConsoleColor.Red;
@@ -282,19 +282,19 @@ namespace wsysbuilder
 
                 byte[] adpcm_data;
 
-                var sWaveFile = $"{projFolder}/custom/{miniIndex}.wav";
-                if (File.Exists(sWaveFile))
+                var cWaveFile = $"{projFolder}/custom/{miniIndex}.wav";
+                if (File.Exists(cWaveFile))
                 {
-                    var strm = File.OpenRead(sWaveFile);
+                    var strm = File.OpenRead(cWaveFile);
                     var strmInt = new BinaryReader(strm);
-                    Console.WriteLine(sWaveFile);
+                    Console.WriteLine(cWaveFile);
                    // Console.WriteLine(cWaveFile);
                     var WaveData = PCM16WAV.readStream(strmInt);
                     if (WaveData == null)
-                        assertHaltStrImmediate($"ABORT: '{sWaveFile} has invalid format. (Must be PCM16!)");
+                        assertHaltStr($"ABORT: '{cWaveFile} has invalid format.");
 
-                    assertHalt(WaveData.sampleRate < 48000, $"ABORT: '{sWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
-                    assertHalt(WaveData.channels < 1, $"ABORT: '{sWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
+                    assertHalt(WaveData.sampleRate > 48000, $"ABORT: '{cWaveFile}' has samplerate {WaveData.sampleRate}hz (Max: 32000hz)");
+                    assertHalt(WaveData.channels > 1, $"ABORT: '{cWaveFile}' has too many channels {WaveData.channels}chn (Max: 1)");
                     // Console.WriteLine($"\n\t*** Packing custom wave {cWaveFile}");
                     int samplesCount = 0;
 
@@ -333,7 +333,7 @@ namespace wsysbuilder
                             wData.format = 0;
                             break;                            
                         default:
-                            assertHaltStrImmediate("Unknown encode format '{0}'", bank_format);
+                            assertHaltStr("Unknown encode format '{0}'", bank_format);
                             break;
                     }
                     
@@ -403,7 +403,7 @@ namespace wsysbuilder
                 var ret = (int)wsysWriter.BaseStream.Position;
                 var name = Encoding.ASCII.GetBytes(scnData.awfile);
                 wsysWriter.BaseStream.Write(name, 0, name.Length);
-                for (int i = 0; i < 0x70 - name.Length; i++)
+                for (int i = 0; i < 0x40 - name.Length; i++)
                     wsysWriter.Write((byte)0);
                 wsysWriter.Write(scnData.waves.Length);
         

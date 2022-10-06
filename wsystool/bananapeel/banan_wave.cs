@@ -212,6 +212,8 @@ namespace wsysbuilder
                 blockAlign = br.ReadInt16(),
                 bitsPerSample = br.ReadInt16()
             };
+            //if (NewWave.bitsPerSample != 16)
+            //    throw new Exception("WAV must be PCM16");
             // Find + load PCM16 buffer chunk
             br.BaseStream.Position = wavHAnch; // Seek back to section anchor (first section magic)
             var datOfs = findChunk(br, DATA); // locate data chunk
@@ -221,7 +223,16 @@ namespace wsysbuilder
             NewWave.sampleCount = datSize / NewWave.blockAlign; // calculate sample count (data length / block alignment)
             NewWave.buffer = new short[NewWave.sampleCount * NewWave.channels]; // initialize PCM buffer array
             for (int i = 0; i < NewWave.sampleCount * NewWave.channels; i++)
-                NewWave.buffer[i] = br.ReadInt16(); // sprawl out samples into array
+                if (NewWave.bitsPerSample == 16)
+                    NewWave.buffer[i] = br.ReadInt16(); // sprawl out samples into array
+                else
+                {
+                    var sample = br.ReadByte();
+                    NewWave.buffer[i] = (short)(sample * (sample < 0 ? 256 : 258));
+                }
+
+            
+
 
             br.BaseStream.Position = wavHAnch; // Seek back to section anchor (first section magic)
             // Load cue points (optional)
