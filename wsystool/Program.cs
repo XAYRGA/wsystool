@@ -20,9 +20,9 @@ namespace wsysbuilder
 
             args = new string[]
             {
-                "pack",
-                "WS_CUSTOM",
-                "WSY"
+                "unpack",
+                "ipl.wsys",
+                "iplws"
 
             };
 #endif

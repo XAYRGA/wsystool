@@ -123,7 +123,7 @@ namespace libJAudio.Loaders
         {
             var ofs = aafRead.BaseStream.Position; // Store where we started 
             byte nextbyte; // Blank byte
-            byte[] name = new byte[0x40]; // Array for the name
+            byte[] name = new byte[0x44]; // Array for the name
 
             int count = 0; // How many we've done
             while ((nextbyte = aafRead.ReadByte()) != 0xFF & nextbyte != 0x00) // Read until we've read 0 or FF
@@ -131,7 +131,7 @@ namespace libJAudio.Loaders
                 name[count] = nextbyte; // Store into byte array
                 count++; // Count  how many valid bytes  we've read.
             }
-            aafRead.BaseStream.Seek(ofs + 0x40, SeekOrigin.Begin); // Seek 0x70 bytes, because thats the statically allocated space for the wavegroup path. 
+            aafRead.BaseStream.Seek(ofs + 0x44, SeekOrigin.Begin); // Seek 0x70 bytes, because thats the statically allocated space for the wavegroup path. 
             return Encoding.ASCII.GetString(name, 0, count); // Return a string with the name, but only of the valid bytes we've read. 
         }
 
@@ -193,6 +193,7 @@ namespace libJAudio.Loaders
             newWG.mOffset =  (int)binStream.BaseStream.Position;
          
             newWG.awFile = readArchiveName(binStream); // Exec helper functionn, which reads 0x70 bytes and trims off the fat. 
+           
             var waveCount = binStream.ReadInt32(); // Read the wave count
             int[] WaveOffsets = Helpers.readInt32Array(binStream, waveCount); // Read waveCount int32's
             newWG.Waves = new JWaveDescriptor[waveCount]; // make an array with all of the wave counts, this is to store the waves we will read

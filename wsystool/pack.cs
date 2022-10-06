@@ -391,8 +391,7 @@ namespace wsysbuilder
             wsysWriter.Write((short)wData.last);
             wsysWriter.Write((short)wData.penult);
             wData.mOffset = ret;
-            wsysWriter.Write(0);
-            wsysWriter.Write(0xCCCCCCCC);
+         
             wsysWriter.Flush();
 
             return ret;
@@ -403,7 +402,7 @@ namespace wsysbuilder
                 var ret = (int)wsysWriter.BaseStream.Position;
                 var name = Encoding.ASCII.GetBytes(scnData.awfile);
                 wsysWriter.BaseStream.Write(name, 0, name.Length);
-                for (int i = 0; i < 0x40 - name.Length; i++)
+                for (int i = 0; i < 0x44 - name.Length; i++)
                     wsysWriter.Write((byte)0);
                 wsysWriter.Write(scnData.waves.Length);
         
@@ -438,10 +437,8 @@ namespace wsysbuilder
             var ret = (int)wsysWriter.BaseStream.Position;
             wsysWriter.Write((short)wsysid);
             wsysWriter.Write((short)waveid);
-            for (int i = 0; i < 0xB; i++)
-                wsysWriter.Write(0); // empty?
-            wsysWriter.Write(0xCCCCCCCC);
             wsysWriter.Write(0xFFFFFFFF); // what the fuck...
+            wsysWriter.Write(0xFFFFFFFF);
 
             return ret;
         }

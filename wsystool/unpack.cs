@@ -203,13 +203,16 @@ namespace wsysbuilder
                 Console.WriteLine("Transforming ADPCM data.... (may take a while)");
                 for (int cWI = 0; cWI < WaveSystem.Groups.Length; cWI++)
                 {
+                    
                     var cGrp = WaveSystem.Groups[cWI];
                     var cScn = WaveSystem.Scenes[cWI];
                     var awf = getAWFileHandle(base_addr, cGrp.awFile);
                     if (awf == null)
                         cmdarg.assert("Cannot find AWFile {0}", cGrp.awFile);
+
                     for (int i = 0; i < cGrp.Waves.Length; i++)
                     {
+                 
                         var cData = cScn.CDFData[i];
                         var wData = cGrp.Waves[i];
                         var br = new BeBinaryReader(awf);
