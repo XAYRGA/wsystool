@@ -403,7 +403,7 @@ namespace wsysbuilder
                 var ret = (int)wsysWriter.BaseStream.Position;
                 var name = Encoding.ASCII.GetBytes(scnData.awfile);
                 wsysWriter.BaseStream.Write(name, 0, name.Length);
-                for (int i = 0; i < 0x40 - name.Length; i++)
+                for (int i = 0; i < 0x70 - name.Length; i++)
                     wsysWriter.Write((byte)0);
                 wsysWriter.Write(scnData.waves.Length);
         
