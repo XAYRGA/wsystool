@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wsysbuilder
+namespace bananapeel
 {
 
     public class WAVCuePoint
@@ -212,9 +212,7 @@ namespace wsysbuilder
                 blockAlign = br.ReadInt16(),
                 bitsPerSample = br.ReadInt16()
             };
-            //if (NewWave.bitsPerSample != 16)
-            //    throw new Exception("WAV must be PCM16");
-            // Find + load PCM16 buffer chunk
+
             br.BaseStream.Position = wavHAnch; // Seek back to section anchor (first section magic)
             var datOfs = findChunk(br, DATA); // locate data chunk
             if (datOfs < 0) // no PCM buffer chunk, abort. 
@@ -231,7 +229,7 @@ namespace wsysbuilder
                     NewWave.buffer[i] = (short)(sample * (sample < 0 ? 256 : 258));
                 }
 
-            
+
 
 
             br.BaseStream.Position = wavHAnch; // Seek back to section anchor (first section magic)
@@ -258,14 +256,19 @@ namespace wsysbuilder
         public void writeStreamLazy(BinaryWriter bw)
         {
             var bufferLength = buffer.Length * 2; // Since the buffer is shorts, the length will be double. 
+            var bytesPerFrame = bitsPerSample / 8;
             // Assemble header
+
             bw.BaseStream.Write(wavhead, 0, wavhead.Length);
+            bw.BaseStream.Position = 0x16;
+            bw.Write(channels);
             bw.BaseStream.Position = 24;
             bw.Write((int)sampleRate); // Sample rate.... twice?
-            bw.Write((int)sampleRate);
+            bw.Write((int)sampleRate * channels * bytesPerFrame);
+            bw.Write(blockAlign);
             bw.BaseStream.Position = 40;
             // Also includes WAVEfmt                
-            bw.Write((int)bufferLength / channels);
+            bw.Write((int)bufferLength);
             for (int i = 0; i < buffer.Length; i++)
                 bw.Write(buffer[i]); // sprawl out each short
 
@@ -275,14 +278,12 @@ namespace wsysbuilder
                 bw.Write((cuePoints.Length * 24) + 4);
                 bw.Write(cuePoints.Length);
                 for (int i = 0; i < cuePoints.Length; i++)
-                {
                     cuePoints[i].writeStream(bw);
-                }
+                
             }
             if (sampler.loops != null)
-            {
                 sampler.writeStream(bw);
-            }
+
             var tl_end = (int)bw.BaseStream.Position;
             bw.BaseStream.Position = 4;
             bw.Write(tl_end - 8);
