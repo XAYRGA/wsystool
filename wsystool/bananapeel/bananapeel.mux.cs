@@ -61,6 +61,27 @@ namespace bananapeel
             return outbytes;
         }
 
+
+        public static byte[] PCM16TOADPCM4(short[] pcm)
+        {
+            var totalFrames = (pcm.Length + 16 - 1) / 16; // upwards frame rounding. 
+            var adpcmData = new byte[totalFrames * 9]; // 9 bytes per ADPCM frame
+            var frame = 0;
+            var last = 0;
+            var penult = 0;
+
+            for (int sample = 0; sample < pcm.Length; sample+=16)
+            {
+                var frameSamples = new short[16];
+                var adpcm = new byte[9];
+                Array.Copy(pcm, sample, frameSamples, 0, 16);
+                bananapeel.ADPCMFAST.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult);
+                Array.Copy(adpcm, 0, adpcmData, frame * 9, 9);
+                frame++;
+            }
+            return adpcmData;
+        }
+
         public static short[] ADPCM4TOPCM16(byte[] adpdata)
         {
             var totalSamples = ((adpdata.Length / 9) * 16);

@@ -1,41 +1,20 @@
-﻿using JaiMaker;
+﻿using bananapeel;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
-using xayrga.byteglider;
-using bananapeel;
-using System.Xml.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-namespace wsystool2
+namespace wsystool
 {
-    internal class WSYSSerializer
+    internal class WSYSProjectDeserializer : WSYSProject
     {
-        public Dictionary<int, WSYSWave> WaveTable = new Dictionary<int, WSYSWave>();
-        public Dictionary<int, byte[]> WaveBuffers = new Dictionary<int, byte[]>();
-
-
-        private class WSYSProjectContainer
-        {
-            public int id; 
-            public List<string> Scenes = new List<string>();
-        }
-        private class WSYSProjectSceneContainer
-        {
-            public string awName;
-            public List<int> waves = new List<int>();
-        }
-
         public void LoadWSYS(WaveSystem waveSystem, string AWPath)
         {
             // Rebuild the original wavetable from what's left over in the scenes and groups. 
             for (int sceneGroup = 0; sceneGroup < waveSystem.Groups.Length; sceneGroup++)
             {
-
                 // This is not the way to parse this, but in practice it doesn't show up differently.               
                 var cGrp = waveSystem.Groups[sceneGroup];
                 var cScn = waveSystem.Scenes[sceneGroup];
@@ -51,7 +30,7 @@ namespace wsystool2
                     // Don't reload the wave if we already have it
                     if (WaveTable.ContainsKey(sWave.WaveID))
                         continue;
-             
+
                     WaveTable[sWave.WaveID] = gWave;
 
                     awHnd.Position = gWave.awOffset;
@@ -62,9 +41,11 @@ namespace wsystool2
                 awHnd.Close();
             }
         }
+
+
         public void SaveProjectData(WaveSystem waveSystem, string folder)
         {
-    
+
             SaveBuffers($"{folder}/reference/");
 
             if (!Directory.Exists($"{folder}/reference"))
@@ -82,7 +63,7 @@ namespace wsystool2
             var prj = new WSYSProjectContainer();
             prj.id = waveSystem.id;
             List<string> Scenes = prj.Scenes;
-            for (int i = 0; i <  waveSystem.Scenes.Length; i++)
+            for (int i = 0; i < waveSystem.Scenes.Length; i++)
             {
                 var scn = waveSystem.Scenes[i];
                 var grp = waveSystem.Groups[i];
@@ -98,18 +79,18 @@ namespace wsystool2
                 Scenes.Add(fileName);
             }
 
-            File.WriteAllText($"{folder}/wsys.json", JsonConvert.SerializeObject(prj,Formatting.Indented));
+            File.WriteAllText($"{folder}/wsys.json", JsonConvert.SerializeObject(prj, Formatting.Indented));
         }
 
         public void SaveBuffers(string folder)
         {
-            foreach (var wave in WaveBuffers)            
+            foreach (var wave in WaveBuffers)
                 File.WriteAllBytes($"{folder}/{wave.Key}.abf", wave.Value);
         }
 
         public void RenderWaveData(string folder)
         {
-            foreach(var wave in WaveTable)
+            foreach (var wave in WaveTable)
             {
                 var wData = wave.Value;
                 var buffer = WaveBuffers[wave.Key];
@@ -166,7 +147,6 @@ namespace wsystool2
                 fileData.Close();
             }
         }
-
 
     }
 }

@@ -7,7 +7,7 @@ using System.IO;
 using xayrga.byteglider;
 using Newtonsoft.Json;
 
-namespace JaiMaker
+namespace wsystool
 {
     internal class WaveSystem
     {
@@ -79,6 +79,7 @@ namespace JaiMaker
 
         private int writeWinf(bgWriter wr)
         {
+            
             for (int i = 0; i < Groups.Length; i++)
                 Groups[i].WriteToStream(wr);
 
@@ -145,7 +146,7 @@ namespace JaiMaker
             wr.WriteBE(wbctOffs);
 
             wr.BaseStream.Position = size;
-
+            wr.Write(new byte[0x10]);
             wr.PadAlign(0x20);
         }
     }
@@ -299,6 +300,7 @@ namespace JaiMaker
 
         internal int mBaseAddress = 0;
 
+
         public void loadFromStream(bgReader rd)
         {
             GroupID = rd.ReadInt16BE();
@@ -325,27 +327,29 @@ namespace JaiMaker
     }
 
 
-    public class WSYSWave
+    public struct WSYSWave
     {
-        public byte format;
-        public byte key;
-        public float sampleRate;
-        public int sampleCount;
+        public byte format = 0;
+        public byte key = 0;
+        public float sampleRate = 0;
+        public int sampleCount = 0;
 
         [JsonIgnore]
-        public int awOffset;
+        public int awOffset = 0;
         [JsonIgnore]
-        public int awLength;
+        public int awLength = 0;
 
-        public bool loop;
-        public int loop_start;
-        public int loop_end;
+        public bool loop = false;
+        public int loop_start = 0;
+        public int loop_end = 0;
 
-        public short last;
-        public short penult;
+        public short last = 0;
+        public short penult = 0;
 
 
         internal int mBaseAddress = 0;
+
+        public WSYSWave() {}
 
         public void loadFromStream(bgReader rd)
         {
