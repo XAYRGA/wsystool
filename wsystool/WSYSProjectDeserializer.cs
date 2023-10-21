@@ -44,9 +44,7 @@ namespace wsystool
 
 
         public void SaveProjectData(WaveSystem waveSystem, string folder)
-        {
-
-            SaveBuffers($"{folder}/reference/");
+        {         
 
             if (!Directory.Exists($"{folder}/reference"))
                 Directory.CreateDirectory($"{folder}/reference");
@@ -56,6 +54,8 @@ namespace wsystool
 
             if (!Directory.Exists($"{folder}/scenes"))
                 Directory.CreateDirectory($"{folder}/scenes");
+
+            SaveBuffers($"{folder}/reference/");
 
             // Save the wavetable
             File.WriteAllText($"{folder}/wavetable.json", JsonConvert.SerializeObject(WaveTable, Formatting.Indented));

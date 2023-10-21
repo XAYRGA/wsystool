@@ -30,9 +30,11 @@ namespace wsystool
             {
                 case "unpack":
                     {
+                        
                         var wsysFile = cmdarg.assertArg(1, "WSYS File");
                         var projectFolder = cmdarg.assertArg(2, "Project Folder");
                         var waveOut = cmdarg.findDynamicStringArgument("waveout", null);
+                        var projFileName = Path.GetFileName(wsysFile);
 
                         cmdarg.assert(File.Exists(wsysFile), "Cannot locate WSYS file");
 
@@ -45,17 +47,19 @@ namespace wsystool
                         var WSYS = WaveSystem.CreateFromStream(wsysRd);
                         var Serializer = new WSYSProjectDeserializer();
 
+                        Console.WriteLine($"[wsystool] Loading {projFileName} ");
                         Serializer.LoadWSYS(WSYS, awPath);
+
+                        Console.WriteLine($"[wsystool] {projFileName} Exporting project structure");
+                        Serializer.SaveProjectData(WSYS, projectFolder);
 
                         if (waveOut != null)
                         {
                             if (!Directory.Exists(waveOut))
                                 Directory.CreateDirectory(waveOut);
+                            Console.WriteLine($"[wsystool] WAVEOUT: {projFileName} Extracting wave data...");
                             Serializer.RenderWaveData(waveOut);
                         }
-
-                        Serializer.SaveProjectData(WSYS, projectFolder);
-                       
                     }
                     break;
                 case "pack":
