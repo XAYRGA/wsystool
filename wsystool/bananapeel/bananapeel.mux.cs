@@ -75,7 +75,7 @@ namespace bananapeel
                 var frameSamples = new short[16];
                 var adpcm = new byte[9];
                 Array.Copy(pcm, sample, frameSamples, 0, 16);
-                bananapeel.ADPCMFAST.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult);
+                bananapeel.ADPCMTRUE.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult, sample==0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 9, 9);
                 frame++;
             }
@@ -104,7 +104,7 @@ namespace bananapeel
                     loopPenult = (short)penult;
                 }
                 Array.Copy(pcm, sample, frameSamples, 0, remainingSamples);
-                bananapeel.ADPCMFAST.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult);
+                bananapeel.ADPCMTRUE.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult, sample==0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 9, 9);
                 frame++;
             }
@@ -132,7 +132,7 @@ namespace bananapeel
                     loopPenult = (short)penult;
                 }
                 Array.Copy(pcm, sample, frameSamples, 0, remainingSamples);
-                bananapeel.ADPCMFAST.PCM16TOADPCM2(frameSamples, adpcm, ref last, ref penult);
+                bananapeel.ADPCMTRUE.PCM16TOADPCM2(frameSamples, adpcm, ref last, ref penult, sample == 0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 5, 5);
                 frame++;
             }
@@ -155,7 +155,7 @@ namespace bananapeel
                 var adpcm = new byte[5];
        
                 Array.Copy(pcm, sample, frameSamples, 0, remainingSamples);
-                bananapeel.ADPCMFAST.PCM16TOADPCM2(frameSamples, adpcm, ref last, ref penult);
+                bananapeel.ADPCMTRUE.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult, sample==0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 5, 5);
                 frame++;
             }
@@ -176,7 +176,7 @@ namespace bananapeel
                 for (int i = 0; i < 9; i++) 
                     adpcm4[i] = adpdata[frameOffset + i];
                 frameOffset += 9; 
-                bananapeel.ADPCMFAST.ADPCM4TOPCM16(adpcm4, sample, ref last, ref pen); 
+                bananapeel.ADPCMTRUE.ADPCM4TOPCM16(adpcm4, sample, ref last, ref pen); 
                 for (int i = 0; i < 16; i++)  
                     smplBuff[sam + i] = sample[i]; 
             }
@@ -198,7 +198,7 @@ namespace bananapeel
                 for (int i = 0; i < 5; i++)
                     adpcm4[i] = adpdata[frameOffset + i];
                 frameOffset += 5;
-                bananapeel.ADPCMFAST.ADPCM4TOPCM16(adpcm4, sample, ref last, ref pen);
+                bananapeel.ADPCMTRUE.ADPCM2TOPCM16(adpcm4, sample, ref last, ref pen);
                 for (int i = 0; i < 16; i++)
                     smplBuff[sam + i] = sample[i];
             }

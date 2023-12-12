@@ -105,6 +105,20 @@ namespace wsystool
 
                     }
                     break;
+                default:
+                    {
+                        Console.WriteLine(@"Syntax:
+wsystool <operation> [args....]
+wsystool unpack      <wsFile>    <project file>
+wsystool pack        <projectFile>   <wsOutput>
+
+Optional arguments:
+        -waveout <path>     : Extracts all of the waves from the wavesystem into the specified folder, doesn't if not specified.
+
+        -awpath  <path>     :Changes the directory to look for .AW files when unpacking, and to place .aw files when repacking.");
+                        break;
+
+                    }
             }
 #if DEBUG 
 

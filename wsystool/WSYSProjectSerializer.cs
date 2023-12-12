@@ -62,7 +62,8 @@ namespace wsystool
                     customWaveInfo.Add(waveID, new WSYSProjectCustomWave() 
                     {
                         Format = "adpcm4", // Adpcm4 is default for gamecube
-                        Key = 60 // 60 is middle C
+                        Key = 60, // 60 is middle C
+                        FileName = Path.GetFileName(file)
                     });
             }
         }
@@ -86,10 +87,11 @@ namespace wsystool
                         customWaveFile = $"{folder}/custom/{wInfo.FileName}";
                 }
 
+               
 
                 var customFileExists = File.Exists(customWaveFile);
                 if (!customFileExists && hasWaveInfo)
-                    throw new WSYSProjectException($"Error for waveID {k}! If the wavetable_custom.json contains an entry for {k}, the accompanying WAV file must exist in the 'custom' folder!");
+                    throw new WSYSProjectException($"Error for waveID {k}! If the wavetable_custom.json contains an entry for {k}, the accompanying WAV file must exist in the 'custom' folder! ({customWaveFile})");
                 else if (customFileExists)
                 {
                     var wavFile = loadWavFile(customWaveFile);
