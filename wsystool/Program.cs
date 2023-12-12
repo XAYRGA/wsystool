@@ -2,13 +2,28 @@
 using xayrga.cmdl;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using bananapeel;
 
 namespace wsystool
 {
     internal class Program
     {
+
+
+        static void Test()
+        {
+            var wave = PCM16WAV.readStream(new BinaryReader(File.OpenRead("12.wav")));
+            short w = 0;
+            short x = 0;
+            
+            var baaaaby = bananapeel.mux.PCM16TOADPCM2(wave.buffer, 0, out w, out x);
+            Console.WriteLine($"LAST: {w} PENULT: {x}");
+            File.WriteAllBytes("adpcm2.bin", baaaaby);
+        }
+
         static void Main(string[] args)
         {
+
 #if DEBUG
             args = new string[]
             {

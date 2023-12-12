@@ -37,23 +37,32 @@ namespace wsystool
             return wave;
         }
 
+        private string extractNumericPrefix(string name)
+        {
+            string outValue = "";
+            byte index = 0; 
+            while (name[index] <= '9' && name[index] >= '1')  
+                outValue += name[index++];
+            return outValue;
+        }
+
 
         private void loadInlineCustomWaves(string folder)
         {
             var files = Directory.GetFiles(folder, "*.wav");
             foreach (var file in files)
             {
-                var justFileName = Path.GetFileNameWithoutExtension(file);
-                var w = 0;
+                var justFileName = extractNumericPrefix(Path.GetFileNameWithoutExtension(file));               
+                var waveID = 0;
 
-                if (!Int32.TryParse(file, out w))
+                if (!Int32.TryParse(justFileName, out waveID))
                     continue; 
 
-                if (!customWaveInfo.ContainsKey(w)) // If we already have a way we've specified to handle this, let's not import over it.
-                    customWaveInfo.Add(w, new WSYSProjectCustomWave() 
+                if (!customWaveInfo.ContainsKey(waveID)) // If we already have a way we've specified to handle this, let's not import over it.
+                    customWaveInfo.Add(waveID, new WSYSProjectCustomWave() 
                     {
                         Format = "adpcm4", // Adpcm4 is default for gamecube
-                        Key = 64 // 64 is middle C
+                        Key = 60 // 60 is middle C
                     });
             }
         }
@@ -95,10 +104,16 @@ namespace wsystool
                     switch (currentWave.format)
                     {
                         case 0: // GCAFCADPCM4
-                            WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer);
+                            if (currentWave.loop)
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer);
+                            else
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer, currentWave.loop_start, out currentWave.last, out currentWave.penult);
                             break;
                         case 1: // GCAFCADPCM2
-                            throw new WSYSProjectException("ADPCM2 Encoding isn't implemented yet");
+                            if (currentWave.loop)
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM2(wavFile.buffer);
+                            else
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM2(wavFile.buffer, currentWave.loop_start, out currentWave.last, out currentWave.penult);
                             break;
                         case 2: // PCM8
                             WaveBuffers[k] = bananapeel.mux.PCM1628(wavFile.buffer);
@@ -107,7 +122,7 @@ namespace wsystool
                             WaveBuffers[k] = bananapeel.mux.PCM16ShortToByte(bananapeel.mux.PCM16BYTESWAP(wavFile.buffer));
                             break;
                         default:
-                                throw new WSYSProjectException($"Unsupported enode format {currentWave.format}");
+                                throw new WSYSProjectException($"Unsupported encode format {currentWave.format}");
                     }
                 } else if (File.Exists(standardBufferFile))
                 {
