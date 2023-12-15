@@ -40,8 +40,8 @@ namespace wsystool
         private string extractNumericPrefix(string name)
         {
             string outValue = "";
-            byte index = 0; 
-            while (name[index] <= '9' && name[index] >= '1')  
+            byte index = 0;
+            while (index < name.Length && name[index] <= '9' && name[index] >= '1')  
                 outValue += name[index++];
             return outValue;
         }
