@@ -72,9 +72,10 @@ namespace bananapeel
 
             for (int sample = 0; sample < pcm.Length; sample+=16)
             {
+                var remainingSamples = (pcm.Length - sample) < 16 ? (pcm.Length - sample) : 16;
                 var frameSamples = new short[16];
                 var adpcm = new byte[9];
-                Array.Copy(pcm, sample, frameSamples, 0, 16);
+                Array.Copy(pcm, sample, frameSamples, 0, remainingSamples);
                 bananapeel.ADPCMTRUE.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult, sample==0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 9, 9);
                 frame++;

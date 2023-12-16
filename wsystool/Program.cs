@@ -24,14 +24,6 @@ namespace wsystool
         static void Main(string[] args)
         {
 
-#if DEBUG
-            args = new string[]
-            {
-                "pack",
-                "project",
-                "new.wsys"
-            };
-#endif
             Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
             cmdarg.cmdargs = args;
 
