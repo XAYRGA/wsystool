@@ -99,7 +99,7 @@ namespace bananapeel
                 var remainingSamples = (pcm.Length - sample) < 16 ? (pcm.Length - sample) : 16;
                 var frameSamples = new short[16];
                 var adpcm = new byte[9];
-                if (sample == loopSmpl || sample + 16 < loopSmpl)
+                if (sample < loopSmpl)
                 {
                     loopLast = (short)last;
                     loopPenult = (short)penult;
@@ -127,7 +127,7 @@ namespace bananapeel
                 var remainingSamples = (pcm.Length - sample) < 16 ? (pcm.Length - sample) : 16;
                 var frameSamples = new short[16];
                 var adpcm = new byte[5];
-                if (sample == loopSmpl || sample + 16 < loopSmpl)
+                if (sample < loopSmpl)
                 {
                     loopLast = (short)last;
                     loopPenult = (short)penult;

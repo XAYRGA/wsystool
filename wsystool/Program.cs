@@ -26,6 +26,13 @@ namespace wsystool
 
             Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
             cmdarg.cmdargs = args;
+#if DEBUG
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.WriteLine("!!!!!!!!DEBUG BUILD: Do not pack in release!!!!!!!!!");
+            Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Console.ForegroundColor = ConsoleColor.Gray;
+#endif
 
             var operation = cmdarg.assertArg(0, "Operation");
             operation = operation.ToLower();
@@ -113,8 +120,7 @@ Optional arguments:
                     }
             }
 #if DEBUG 
-
-            Console.WriteLine($"Execution time {TaskTimer.Elapsed.TotalSeconds}s");
+            Console.WriteLine($"Total processing time {TaskTimer.Elapsed.TotalSeconds}s");
 #endif
 
 

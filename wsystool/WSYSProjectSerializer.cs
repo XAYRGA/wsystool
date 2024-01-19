@@ -72,7 +72,7 @@ namespace wsystool
         {
             Dictionary<int, WSYSWave> newWaveTable = new Dictionary<int, WSYSWave>();
             foreach (KeyValuePair<int, WSYSWave> waveInstance in WaveTable)
-            {   
+            {
                 var k = waveInstance.Key;
                 var currentWave = waveInstance.Value;
 
@@ -87,8 +87,6 @@ namespace wsystool
                         customWaveFile = $"{folder}/custom/{wInfo.FileName}";
                 }
 
-               
-
                 var customFileExists = File.Exists(customWaveFile);
                 if (!customFileExists && hasWaveInfo)
                     throw new WSYSProjectException($"Error for waveID {k}! If the wavetable_custom.json contains an entry for {k}, the accompanying WAV file must exist in the 'custom' folder! ({customWaveFile})");
@@ -97,25 +95,27 @@ namespace wsystool
                     var wavFile = loadWavFile(customWaveFile);
                     currentWave.sampleCount = wavFile.sampleCount;
                     currentWave.sampleRate = wavFile.sampleRate;
+
                     if (wavFile.sampler.loops != null && wavFile.sampler.loops.Length > 0)
                     {
                         currentWave.loop = true;
                         currentWave.loop_start = wavFile.sampler.loops[0].dwStart;
                         currentWave.loop_end = wavFile.sampler.loops[0].dwEnd;
                     }
+
                     switch (currentWave.format)
                     {
                         case 0: // GCAFCADPCM4
                             if (currentWave.loop)
-                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer);
-                            else
                                 WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer, currentWave.loop_start, out currentWave.last, out currentWave.penult);
+                            else
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM4(wavFile.buffer);
                             break;
                         case 1: // GCAFCADPCM2
                             if (currentWave.loop)
-                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM2(wavFile.buffer);
-                            else
                                 WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM2(wavFile.buffer, currentWave.loop_start, out currentWave.last, out currentWave.penult);
+                            else
+                                WaveBuffers[k] = bananapeel.mux.PCM16TOADPCM2(wavFile.buffer);
                             break;
                         case 2: // PCM8
                             WaveBuffers[k] = bananapeel.mux.PCM1628(wavFile.buffer);
@@ -124,37 +124,59 @@ namespace wsystool
                             WaveBuffers[k] = bananapeel.mux.PCM16ShortToByte(bananapeel.mux.PCM16BYTESWAP(wavFile.buffer));
                             break;
                         default:
-                                throw new WSYSProjectException($"Unsupported encode format {currentWave.format}");
+                            throw new WSYSProjectException($"Unsupported encode format {currentWave.format}");
                     }
+#if DEBUG
+                    if (currentWave.loop)
+                        Console.WriteLine($"ENCODER: CustomWave {k} fmt={formatNumberToString(currentWave.format)}, bfr=0x{WaveBuffers[k].Length:X}, loop: ye ({currentWave.loop_start}, {currentWave.loop_end} L={currentWave.last}, P={currentWave.penult})");
+                    else
+                        Console.WriteLine($"ENCODER: CustomWave {k} fmt={formatNumberToString(currentWave.format)}, bfr=0x{WaveBuffers[k].Length:X}, loop: no");          
+#endif
                 } else if (File.Exists(standardBufferFile))
                 {
-                    // Using the standard buffer, don't post process
-                    var data = File.ReadAllBytes(standardBufferFile);
-                    WaveBuffers[k] = data;
-                } else
-                    throw new WSYSProjectException($"Cannot locate buffer file for waveid {k} ({standardBufferFile})");              
-                
-                newWaveTable[k] = currentWave;
-            }
-            WaveTable = newWaveTable;
-        }
+                        // Using the standard buffer, don't post process
+                        var data = File.ReadAllBytes(standardBufferFile);
+                        WaveBuffers[k] = data;
+                    } else
+                        throw new WSYSProjectException($"Cannot locate buffer file for waveid {k} ({standardBufferFile})");
 
-        private void integrateCustomWaves()
-        {
-            foreach (KeyValuePair<int,WSYSProjectCustomWave> kvpWaveInfo in customWaveInfo)
+                    newWaveTable[k] = currentWave;
+                }
+                WaveTable = newWaveTable;
+            }
+
+            private void integrateCustomWaves()
             {
-                var key = kvpWaveInfo.Key;
-                var value = kvpWaveInfo.Value;
+                foreach (KeyValuePair<int, WSYSProjectCustomWave> kvpWaveInfo in customWaveInfo)
+                {
+                    var key = kvpWaveInfo.Key;
+                    var value = kvpWaveInfo.Value;
 
-                var newFormat = formatStringToNumber(value.Format);
-                if (newFormat < 0)
-                    throw new WSYSProjectException($"Custom Wave ID {key} has invalid format {value.Format}");
+                    var newFormat = formatStringToNumber(value.Format);
+                    if (newFormat < 0)
+                        throw new WSYSProjectException($"Custom Wave ID {key} has invalid format {value.Format}");
 
-                WaveTable[key] = new WSYSWave() { format = (byte)newFormat, key = value.Key, };
+                    WaveTable[key] = new WSYSWave() { format = (byte)newFormat, key = value.Key, };
+                }
             }
-        }
 
-        private int formatStringToNumber(string format)
+            private static string formatNumberToString(int format)
+            {
+                switch (format)
+                {
+                    case 0:
+                        return "adpcm4";
+                    case 1:
+                        return "adpcm2";
+                    case 2:
+                        return "pcm8";
+                    case 3:
+                        return "pcm16";
+                    default: return "UNSUPPORTED";
+                }
+            }
+        
+            private static int formatStringToNumber(string format)
         {
             switch (format)
             {
@@ -234,7 +256,7 @@ namespace wsystool
                 SCNE.EXTENDED = new WSYSWaveID[0];
                 SCNE.STATIC = new WSYSWaveID[0];
 
-                var strm = File.OpenWrite($"{awFolder}/{PROJSCENE.awName}");
+                var strm = File.Open($"{awFolder}/{PROJSCENE.awName}",FileMode.Create);
                 var wrt = new bgWriter(strm);
 
                 GRP.waves = new WSYSWave[PROJSCENE.waves.Count];
