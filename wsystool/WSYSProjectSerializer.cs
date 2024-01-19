@@ -18,12 +18,12 @@ namespace wsystool
         List<WSYSProjectSceneContainer> projectScenes;
         WaveSystem waveSystem;
 
-        
+
         private PCM16WAV loadWavFile(string file)
         {
             Console.WriteLine($"[wsystool] Loading custom wave {file}");
             PCM16WAV wave = null;
-            using (Stream fStrm = File.OpenRead(file)) 
+            using (Stream fStrm = File.OpenRead(file))
             using (BinaryReader bread = new BinaryReader(fStrm))
             {
                 wave = PCM16WAV.readStream(bread);
@@ -41,7 +41,7 @@ namespace wsystool
         {
             string outValue = "";
             byte index = 0;
-            while (index < name.Length && name[index] <= '9' && name[index] >= '1')  
+            while (index < name.Length && name[index] <= '9' && name[index] >= '1')
                 outValue += name[index++];
             return outValue;
         }
@@ -52,14 +52,14 @@ namespace wsystool
             var files = Directory.GetFiles(folder, "*.wav");
             foreach (var file in files)
             {
-                var justFileName = extractNumericPrefix(Path.GetFileNameWithoutExtension(file));               
+                var justFileName = extractNumericPrefix(Path.GetFileNameWithoutExtension(file));
                 var waveID = 0;
 
                 if (!Int32.TryParse(justFileName, out waveID))
-                    continue; 
+                    continue;
 
                 if (!customWaveInfo.ContainsKey(waveID)) // If we already have a way we've specified to handle this, let's not import over it.
-                    customWaveInfo.Add(waveID, new WSYSProjectCustomWave() 
+                    customWaveInfo.Add(waveID, new WSYSProjectCustomWave()
                     {
                         Format = "adpcm4", // Adpcm4 is default for gamecube
                         Key = 60, // 60 is middle C
@@ -81,7 +81,8 @@ namespace wsystool
 
                 var hasWaveInfo = customWaveInfo.ContainsKey(k);
 
-                if (hasWaveInfo) {
+                if (hasWaveInfo)
+                {
                     var wInfo = customWaveInfo[k];
                     if (wInfo.FileName != null)
                         customWaveFile = $"{folder}/custom/{wInfo.FileName}";
@@ -130,53 +131,55 @@ namespace wsystool
                     if (currentWave.loop)
                         Console.WriteLine($"ENCODER: CustomWave {k} fmt={formatNumberToString(currentWave.format)}, bfr=0x{WaveBuffers[k].Length:X}, loop: ye ({currentWave.loop_start}, {currentWave.loop_end} L={currentWave.last}, P={currentWave.penult})");
                     else
-                        Console.WriteLine($"ENCODER: CustomWave {k} fmt={formatNumberToString(currentWave.format)}, bfr=0x{WaveBuffers[k].Length:X}, loop: no");          
+                        Console.WriteLine($"ENCODER: CustomWave {k} fmt={formatNumberToString(currentWave.format)}, bfr=0x{WaveBuffers[k].Length:X}, loop: no");
 #endif
-                } else if (File.Exists(standardBufferFile))
-                {
-                        // Using the standard buffer, don't post process
-                        var data = File.ReadAllBytes(standardBufferFile);
-                        WaveBuffers[k] = data;
-                    } else
-                        throw new WSYSProjectException($"Cannot locate buffer file for waveid {k} ({standardBufferFile})");
-
-                    newWaveTable[k] = currentWave;
                 }
-                WaveTable = newWaveTable;
-            }
+                else if (File.Exists(standardBufferFile))
+                {
+                    // Using the standard buffer, don't post process
+                    var data = File.ReadAllBytes(standardBufferFile);
+                    WaveBuffers[k] = data;
+                }
+                else
+                    throw new WSYSProjectException($"Cannot locate buffer file for waveid {k} ({standardBufferFile})");
 
-            private void integrateCustomWaves()
+                newWaveTable[k] = currentWave;
+            }
+            WaveTable = newWaveTable;
+        }
+
+        private void integrateCustomWaves()
+        {
+            foreach (KeyValuePair<int, WSYSProjectCustomWave> kvpWaveInfo in customWaveInfo)
             {
-                foreach (KeyValuePair<int, WSYSProjectCustomWave> kvpWaveInfo in customWaveInfo)
-                {
-                    var key = kvpWaveInfo.Key;
-                    var value = kvpWaveInfo.Value;
+                var key = kvpWaveInfo.Key;
+                var value = kvpWaveInfo.Value;
 
-                    var newFormat = formatStringToNumber(value.Format);
-                    if (newFormat < 0)
-                        throw new WSYSProjectException($"Custom Wave ID {key} has invalid format {value.Format}");
+                var newFormat = formatStringToNumber(value.Format);
+                if (newFormat < 0)
+                    throw new WSYSProjectException($"Custom Wave ID {key} has invalid format {value.Format}");
 
-                    WaveTable[key] = new WSYSWave() { format = (byte)newFormat, key = value.Key, };
-                }
+                WaveTable[key] = new WSYSWave() { format = (byte)newFormat, key = value.Key, };
             }
+        }
 
-            private static string formatNumberToString(int format)
+        private static string formatNumberToString(int format)
+        {
+            switch (format)
             {
-                switch (format)
-                {
-                    case 0:
-                        return "adpcm4";
-                    case 1:
-                        return "adpcm2";
-                    case 2:
-                        return "pcm8";
-                    case 3:
-                        return "pcm16";
-                    default: return "UNSUPPORTED";
-                }
+                case 0:
+                    return "adpcm4";
+                case 1:
+                    return "adpcm2";
+                case 2:
+                    return "pcm8";
+                case 3:
+                    return "pcm16";
+                default: return "UNSUPPORTED";
             }
-        
-            private static int formatStringToNumber(string format)
+        }
+
+        private static int formatStringToNumber(string format)
         {
             switch (format)
             {
@@ -188,7 +191,7 @@ namespace wsystool
                     return 2;
                 case "pcm16":
                     return 3;
-                default : return -1;
+                default: return -1;
             }
         }
 
@@ -256,7 +259,7 @@ namespace wsystool
                 SCNE.EXTENDED = new WSYSWaveID[0];
                 SCNE.STATIC = new WSYSWaveID[0];
 
-                var strm = File.Open($"{awFolder}/{PROJSCENE.awName}",FileMode.Create);
+                var strm = File.Open($"{awFolder}/{PROJSCENE.awName}", FileMode.Create);
                 var wrt = new bgWriter(strm);
 
                 GRP.waves = new WSYSWave[PROJSCENE.waves.Count];
@@ -268,7 +271,7 @@ namespace wsystool
                     if (!WaveTable.ContainsKey(cWID))
                         throw new WSYSProjectException($"Waveid {cWID} not found in wavetable but requested by {PROJSCENE.awName}");
 
-                    var cWave = WaveTable[cWID];          
+                    var cWave = WaveTable[cWID];
                     var buffer = WaveBuffers[cWID];
                     cWave.awOffset = (int)wrt.BaseStream.Position;
                     cWave.awLength = buffer.Length;
@@ -287,6 +290,6 @@ namespace wsystool
             waveSystem.WriteToStream(wsysWr);
         }
 
-        
+
     }
 }
