@@ -20,7 +20,7 @@ namespace wsystool
                 var cScn = waveSystem.Scenes[sceneGroup];
                 // guess we don't need to worry about it.          
 
-                var awHnd = File.OpenRead($"{AWPath}\\{cGrp.awPath}");
+                var awHnd = File.OpenRead($"{AWPath}/{cGrp.awPath}");
 
                 for (int wave = 0; wave < cGrp.waves.Length; wave++)
                 {
