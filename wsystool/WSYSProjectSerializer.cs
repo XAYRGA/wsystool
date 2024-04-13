@@ -41,7 +41,7 @@ namespace wsystool
         {
             string outValue = "";
             byte index = 0;
-            while (index < name.Length && name[index] <= '9' && name[index] >= '1')
+            while (index < name.Length && name[index] <= '9' && name[index] >= '0')
                 outValue += name[index++];
             return outValue;
         }
