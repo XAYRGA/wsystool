@@ -25,7 +25,7 @@ namespace wsystool
 
     class WSYSProjectCustomWave
     {
-        public byte Key = 64;
+        public byte Key = 60;
         public string Format = "adpcm4";
         public string FileName = null;
     }

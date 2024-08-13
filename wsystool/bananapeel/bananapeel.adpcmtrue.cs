@@ -81,14 +81,9 @@ namespace bananapeel
         static short ClampSample16Bit(int sample)
         {
             if (sample < -32768)
-            {
                 sample = -32768;
-            }
             else if (sample > 32767)
-            {
                 sample = 32767;
-            }
-
             return (short)sample;
         }
 

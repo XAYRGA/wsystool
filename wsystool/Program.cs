@@ -9,31 +9,29 @@ namespace wsystool
     internal class Program
     {
 
-
-        static void Test()
-        {
-            var wave = PCM16WAV.readStream(new BinaryReader(File.OpenRead("12.wav")));
-            short w = 0;
-            short x = 0;
-            
-            var baaaaby = bananapeel.mux.PCM16TOADPCM2(wave.buffer, 0, out w, out x);
-            Console.WriteLine($"LAST: {w} PENULT: {x}");
-            File.WriteAllBytes("adpcm2.bin", baaaaby);
-        }
-
         static void Main(string[] args)
         {
 
+
+
             Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
-            cmdarg.cmdargs = args;
+
 #if DEBUG
+          //  args = new string[]
+          //  {
+           //     "pack",
+           //     "./WS_MainWSYS",
+             //   "wsys.out"
+            //};
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Console.WriteLine("!!!!!!!!DEBUG BUILD: Do not pack in release!!!!!!!!!");
             Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Console.ForegroundColor = ConsoleColor.Gray;
-#endif
 
+
+#endif
+            cmdarg.cmdargs = args;
             var operation = cmdarg.assertArg(0, "Operation");
             operation = operation.ToLower();
             var awPath = cmdarg.findDynamicStringArgument("awpath", "Banks");

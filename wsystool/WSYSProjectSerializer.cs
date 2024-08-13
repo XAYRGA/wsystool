@@ -58,11 +58,13 @@ namespace wsystool
                 if (!Int32.TryParse(justFileName, out waveID))
                     continue;
 
+                var importKey = WaveTable.ContainsKey(waveID) ? WaveTable[waveID].key : (byte)60; // default import key is 60, middle C        
+
                 if (!customWaveInfo.ContainsKey(waveID)) // If we already have a way we've specified to handle this, let's not import over it.
                     customWaveInfo.Add(waveID, new WSYSProjectCustomWave()
                     {
                         Format = "adpcm4", // Adpcm4 is default for gamecube
-                        Key = 60, // 60 is middle C
+                        Key = importKey,
                         FileName = Path.GetFileName(file)
                     });
             }
@@ -224,7 +226,7 @@ namespace wsystool
 
             // Integrate them into the wavetable.
             integrateCustomWaves();
-
+             
             loadWaveBuffers(folder);
 
             projectScenes = new List<WSYSProjectSceneContainer>();
