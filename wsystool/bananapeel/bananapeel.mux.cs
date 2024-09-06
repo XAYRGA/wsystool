@@ -55,8 +55,8 @@ namespace bananapeel
             for (int i=0; i < pcm.Length; i++)
             {
                 var sample = pcm[i];
-                outbytes[i * 2] =  (byte)(sample >> 8);
-                outbytes[i * 2 + 1] = (byte)(sample & 0xFF);
+                outbytes[i * 2 + 1] =  (byte)(sample >> 8);
+                outbytes[i * 2 ] = (byte)(sample & 0xFF);
             }
             return outbytes;
         }

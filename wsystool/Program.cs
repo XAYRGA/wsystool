@@ -11,10 +11,10 @@ namespace wsystool
 
         static void Main(string[] args)
         {
+ 
 
 
-
-            Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
+        Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
 
 #if DEBUG
           //  args = new string[]
