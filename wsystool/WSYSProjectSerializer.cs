@@ -52,10 +52,10 @@ namespace wsystool
             var files = Directory.GetFiles(folder, "*.wav");
             foreach (var file in files)
             {
-                var justFileName = extractNumericPrefix(Path.GetFileNameWithoutExtension(file));
+                var justNumericPortion = extractNumericPrefix(Path.GetFileNameWithoutExtension(file));
                 var waveID = 0;
 
-                if (!Int32.TryParse(justFileName, out waveID))
+                if (!Int32.TryParse(justNumericPortion, out waveID))
                     continue;
 
                 var importKey = WaveTable.ContainsKey(waveID) ? WaveTable[waveID].key : (byte)60; // default import key is 60, middle C        
@@ -90,6 +90,7 @@ namespace wsystool
                         customWaveFile = $"{folder}/custom/{wInfo.FileName}";
                 }
 
+                
                 var customFileExists = File.Exists(customWaveFile);
                 if (!customFileExists && hasWaveInfo)
                     throw new WSYSProjectException($"Error for waveID {k}! If the wavetable_custom.json contains an entry for {k}, the accompanying WAV file must exist in the 'custom' folder! ({customWaveFile})");

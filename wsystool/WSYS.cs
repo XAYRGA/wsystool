@@ -217,9 +217,12 @@ namespace wsystool
             rd.BaseStream.Position = cdfOffset;
             DEFAULT = loadContainer(rd, C_DF);
             rd.BaseStream.Position = cexOffset;
-            EXTENDED = loadContainer(rd, C_EX);
+            // zero these, technically in the code they're unused.
+            // flaafy writes invalid scene collections to the WSYS
+            // which causes this to self destruct if actually reading from the offset.
+            EXTENDED = new WSYSWaveID[0]; //loadContainer(rd, C_EX);
             rd.BaseStream.Position = cstOffset;
-            STATIC = loadContainer(rd, C_ST);
+            STATIC = new WSYSWaveID[0]; //loadContainer(rd, C_ST);
         }
 
         public void WriteToStream(bgWriter wr)
