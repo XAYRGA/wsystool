@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -57,10 +58,11 @@ namespace wsystool
 
                 if (!Int32.TryParse(justNumericPortion, out waveID))
                     continue;
+                // default import key is 60, middle C
+                var importKey = WaveTable.ContainsKey(waveID) ? WaveTable[waveID].key : (byte)60; 
 
-                var importKey = WaveTable.ContainsKey(waveID) ? WaveTable[waveID].key : (byte)60; // default import key is 60, middle C        
-
-                if (!customWaveInfo.ContainsKey(waveID)) // If we already have a way we've specified to handle this, let's not import over it.
+                //  Don't import over custom wavetable entries
+                if (!customWaveInfo.ContainsKey(waveID)) 
                     customWaveInfo.Add(waveID, new WSYSProjectCustomWave()
                     {
                         Format = "adpcm4", // Adpcm4 is default for gamecube
@@ -216,11 +218,17 @@ namespace wsystool
             tempData = File.ReadAllText($"{folder}/wavetable.json");
             WaveTable = JsonConvert.DeserializeObject<Dictionary<int, WSYSWave>>(tempData);
 
+            tempData = null;
             if (File.Exists($"{folder}/wavetable_custom.json"))
-            {
                 tempData = File.ReadAllText($"{folder}/wavetable_custom.json");
-                customWaveInfo = JsonConvert.DeserializeObject<Dictionary<int, WSYSProjectCustomWave>>(tempData);
-            }
+            else if (File.Exists($"{folder}/custom_wavetable.json"))
+                tempData = File.ReadAllText($"{folder}/custom_wavetable.json");
+            else if(File.Exists($"{folder}/custom.json"))
+                tempData = File.ReadAllText($"{folder}/custom.json");
+
+
+            if (tempData != null)            
+                customWaveInfo = JsonConvert.DeserializeObject<Dictionary<int, WSYSProjectCustomWave>>(tempData);           
 
             // Loads the custom folder into the wavetable.
             loadInlineCustomWaves($"{folder}/custom/");

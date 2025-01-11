@@ -115,7 +115,7 @@ namespace bananapeel
         public static byte[] PCM16TOADPCM2(short[] pcm, int loopSmpl, out short loopLast, out short loopPenult)
         {
             var totalFrames = (pcm.Length + 16 - 1) / 16; // upwards frame rounding. 
-            var adpcmData = new byte[totalFrames * 5]; // 9 bytes per ADPCM frame
+            var adpcmData = new byte[totalFrames * 5]; // 5 bytes per ADPCM frame
             var frame = 0;
             var last = 0;
             var penult = 0;
@@ -144,7 +144,7 @@ namespace bananapeel
         public static byte[] PCM16TOADPCM2(short[] pcm)
         {
             var totalFrames = (pcm.Length + 16 - 1) / 16; // upwards frame rounding. 
-            var adpcmData = new byte[totalFrames * 5]; // 9 bytes per ADPCM frame
+            var adpcmData = new byte[totalFrames * 5]; // 5 bytes per ADPCM frame
             var frame = 0;
             var last = 0;
             var penult = 0;
@@ -156,7 +156,7 @@ namespace bananapeel
                 var adpcm = new byte[5];
        
                 Array.Copy(pcm, sample, frameSamples, 0, remainingSamples);
-                bananapeel.ADPCMTRUE.PCM16TOADPCM4(frameSamples, adpcm, ref last, ref penult, sample==0);
+                bananapeel.ADPCMTRUE.PCM16TOADPCM2(frameSamples, adpcm, ref last, ref penult, sample==0);
                 Array.Copy(adpcm, 0, adpcmData, frame * 5, 5);
                 frame++;
             }

@@ -17,12 +17,8 @@ namespace wsystool
         Console.WriteLine("WSYSTool - created by xayrga - http://github.com/xayrga/wsystool");
 
 #if DEBUG
-          //  args = new string[]
-          //  {
-           //     "pack",
-           //     "./WS_MainWSYS",
-             //   "wsys.out"
-            //};
+      
+            ;
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Console.WriteLine("!!!!!!!!DEBUG BUILD: Do not pack in release!!!!!!!!!");
@@ -99,7 +95,32 @@ namespace wsystool
                             Console.ForegroundColor = old;
                         }
 #endif
+                        break;
+                    }
 
+                case "convert":
+                    {
+                        var wavFile = cmdarg.assertArg(1, "WAV File");
+                        var outputFile = cmdarg.assertArg(2, "Output File");
+                        var outputFormat = cmdarg.assertArg(3, "Conversion format (adpcm2,adpcm4, pcm8)");
+                        cmdarg.assert(File.Exists(wavFile),$"{wavFile} did not exist or was not accessible.");
+
+                        Console.Write($"Converting {wavFile} to {outputFormat}...");
+                        using (var file = new BinaryReader(File.OpenRead(wavFile)))
+                        {
+                            var wav = PCM16WAV.readStream(file);
+                            var converter = new WAVConvert(wav, outputFormat.ToLower(), outputFile);
+                            try
+                            {
+                                var data = converter.Convert();
+                                File.WriteAllBytes(outputFile, data);
+                                Console.WriteLine("OK!");
+                            } catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+
+                        };
                     }
                     break;
                 default:
@@ -108,6 +129,7 @@ namespace wsystool
 wsystool <operation> [args....]
 wsystool unpack      <wsFile>    <project file>
 wsystool pack        <projectFile>   <wsOutput>
+wsystool convert     <WAVFile>   <RAW Output>   <format>
 
 Optional arguments:
         -waveout <path>     : Extracts all of the waves from the wavesystem into the specified folder, doesn't if not specified.
